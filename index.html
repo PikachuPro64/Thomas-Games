@@ -1,310 +1,508 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Thomas Games</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#0b1020;--panel:#141d33;--panel2:#1b2945;--text:#f4f7ff;--muted:#9eacc8;--blue:#6c8cff;--cyan:#4de1d2;--pink:#ff6fb1;--line:#2b3a5b;--green:#42d392;--red:#ff687d}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 20% 0%,#1b2d56 0,transparent 35%),var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
-header{position:sticky;top:0;z-index:5;background:#0b1020eF;border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
-.nav{max-width:1200px;margin:auto;padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}.brand{font-size:23px;font-weight:900;letter-spacing:-1px;margin-right:auto}.brand span{color:var(--cyan)}button,.btn{border:0;border-radius:11px;padding:10px 15px;font-weight:750;cursor:pointer;color:white;background:var(--blue);transition:.18s}button:hover,.btn:hover{filter:brightness(1.12);transform:translateY(-1px)}button.secondary{background:#273653}button.danger{background:#9e304b}button.good{background:#167c61}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
-main{max-width:1200px;margin:auto;padding:26px 22px 70px}.hero{padding:38px 30px;border:1px solid #33476d;border-radius:24px;background:linear-gradient(115deg,#1d3260,#182344 60%,#26315d);position:relative;overflow:hidden}.hero:after{content:"🎮";position:absolute;right:45px;top:20px;font-size:100px;opacity:.18;transform:rotate(12deg)}h1{font-size:clamp(34px,6vw,58px);margin:0 0 10px;letter-spacing:-2px}.hero p{color:#d2dcf5;max-width:620px;font-size:17px;line-height:1.5}.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:26px 0 18px}.toolbar input{flex:1;min-width:220px}.input, input,select,textarea{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--line);background:#0e172b;color:var(--text);font:inherit;outline:none}.input:focus,input:focus,textarea:focus,select:focus{border-color:var(--cyan)}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:26px 0 13px}.section-head h2{margin:0;font-size:22px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}.game{background:linear-gradient(160deg,#1a2947,#121b30);border:1px solid var(--line);border-radius:17px;overflow:hidden;display:flex;flex-direction:column;min-height:230px}.cover{height:118px;display:grid;place-items:center;font-size:52px;background:linear-gradient(135deg,#263e70,#243051);overflow:hidden}.cover img,.detail-cover img{width:100%;height:100%;object-fit:cover;display:block}.detail-cover{overflow:hidden}.game-frame-wrap{height:calc(100vh - 190px);min-height:420px;max-height:1000px;background:#050914;border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative}.game-frame-wrap iframe{display:block;width:100%;height:100%;border:0;background:#050914;overflow:hidden}#gamePlayerView.player-fullscreen{position:fixed;inset:0;z-index:50;background:var(--bg);padding:12px;overflow:hidden}#gamePlayerView.player-fullscreen .section-head{margin:0 0 8px}#gamePlayerView.player-fullscreen .game-frame-wrap{height:calc(100vh - 88px);max-height:none;min-height:0}#gamePlayerView.player-fullscreen #playerNotice,#gamePlayerView.player-fullscreen #embedHelp{display:none!important}.player-tools{display:flex;gap:8px;flex-wrap:wrap}.game-frame-wrap iframe{scrollbar-width:none} @media(max-width:600px){.game-frame-wrap{height:calc(100vh - 220px);min-height:320px}}.upload-preview{width:100%;max-width:260px;max-height:140px;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:none;margin-top:8px}.admin-stat-note{font-size:12px;color:var(--muted)}.game-body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}.game h3{margin:0;font-size:18px}.game p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:11px;padding:4px 8px;border-radius:30px;background:#263653;color:#c8d7f7}.game-actions{display:flex;gap:7px;margin-top:auto;padding-top:6px}.game-actions button{flex:1;padding:8px;font-size:12px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:20px;margin:18px 0}.panel h2,.panel h3{margin-top:0}.hidden{display:none!important}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .wide{grid-column:1/-1}label{display:block;color:#c6d2eb;font-size:13px;font-weight:700;margin-bottom:6px}.field{min-width:0}.field input,.field textarea,.field select{margin-top:5px}.field textarea{min-height:80px;resize:vertical}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tabs button.active{background:var(--cyan);color:#08212b}.notice{padding:12px 14px;border-radius:11px;background:#1a3550;color:#d6edff;margin:12px 0}.status{font-size:12px;font-weight:800}.status.pending{color:#ffd27a}.status.approved{color:var(--green)}.status.blocked{color:#ff8a9b}.admin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}.admin-row:last-child{border:0}.admin-actions{display:flex;gap:6px;flex-wrap:wrap}.admin-actions button{padding:7px 10px;font-size:12px}.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.modal-back{position:fixed;inset:0;background:#020611c9;z-index:20;display:grid;place-items:center;padding:18px}.modal{width:min(460px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 20px 80px #0008}.modal h2{margin-top:0}.modal .field{margin:12px 0}.close{float:right;background:#293752;padding:6px 10px}.user-chip{font-size:13px;color:var(--cyan);font-weight:750}.detail-hero{display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:center}.detail-cover{height:150px;border-radius:18px;background:linear-gradient(135deg,#263e70,#243051);display:grid;place-items:center;font-size:76px}.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:18px 0}.meta{background:#0e172b;border:1px solid var(--line);border-radius:12px;padding:12px}.meta strong{display:block;margin-top:5px}.admin-toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px}.admin-toolbar input{flex:1;min-width:180px}.footer{text-align:center;color:#7283a5;font-size:12px;margin-top:45px}
-@media(max-width:600px){.nav{gap:8px}.brand{width:100%}.hero{padding:27px 20px}.hero:after{right:12px;font-size:70px}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}}
+:root{--bg:#0b1020;--panel:#141d33;--panel2:#1b2945;--text:#f4f7ff;--muted:#9eacc8;--blue:#6c8cff;--cyan:#4de1d2;--line:#2b3a5b;--green:#42d392;--red:#ff687d}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 20% 0%,#1b2d56 0,transparent 35%),var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#0b1020ee;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
+.nav{max-width:1200px;margin:auto;padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-size:24px;font-weight:900;margin-right:auto}.brand span{color:var(--cyan)}
+button{border:0;border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer;color:white;background:var(--blue)}
+button:hover{filter:brightness(1.12)}button.secondary{background:#273653}button.good{background:#167c61}button.danger{background:#9e304b}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1200px;margin:auto;padding:25px 20px 60px}
+.hero{padding:38px 28px;border:1px solid #33476d;border-radius:22px;background:linear-gradient(115deg,#1d3260,#182344 60%,#26315d)}
+h1{font-size:clamp(32px,6vw,54px);margin:0 0 10px}
+.hero p{color:#d2dcf5;max-width:650px;line-height:1.6}
+.toolbar,.section-head,.actions,.tabs{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toolbar{margin:24px 0 16px}.toolbar input{flex:1;min-width:200px}
+.section-head{justify-content:space-between;margin:25px 0 14px}
+.section-head h2{margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}
+.game{background:linear-gradient(160deg,#1a2947,#121b30);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.cover{height:135px;background:linear-gradient(135deg,#263e70,#243051);display:grid;place-items:center;font-size:55px;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+.game-body{padding:14px;display:flex;flex-direction:column;gap:9px;flex:1}
+.game h3{margin:0;font-size:19px}.game p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.game-actions{display:flex;gap:8px;margin-top:auto}.game-actions button{flex:1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin:18px 0}
+input,textarea,select{width:100%;padding:12px;border-radius:9px;border:1px solid var(--line);background:#0e172b;color:white;font:inherit}
+textarea{min-height:90px;resize:vertical}
+label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wide{grid-column:1/-1}
+.muted{color:var(--muted)}.notice{padding:12px 14px;border-radius:10px;background:#1a3550;color:#d6edff;margin:12px 0}
+.hidden{display:none!important}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+.tag{display:inline-block;padding:4px 8px;border-radius:20px;background:#263653;color:#c8d7f7;font-size:11px;margin-right:5px}
+.status{font-weight:800;font-size:12px}.pending{color:#ffd27a}.approved{color:var(--green)}.blocked{color:#ff8a9b}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.row-actions button{font-size:12px;padding:8px 10px}
+.modal-back{position:fixed;inset:0;background:#020611d9;z-index:20;display:grid;place-items:center;padding:15px}
+.modal{width:min(440px,100%);background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:22px}
+.modal h2{margin-top:0}.modal label{margin-top:13px}
+#player{width:100%;height:calc(100vh - 190px);min-height:400px;border:1px solid var(--line);border-radius:14px;background:#050914}
+.footer{text-align:center;color:#7283a5;font-size:12px;margin-top:40px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.nav .brand{width:100%}#player{height:65vh}}
 </style>
 </head>
 <body>
-<header><div class="nav">
- <div class="brand" id="brandLabel">🎮 Thomas <span>Games</span></div>
- <button class="secondary" onclick="showHome()">Explore</button>
- <button class="secondary" onclick="showPublish()">Publish a game</button>
- <button class="secondary hidden" id="myGamesNav" onclick="showMyGames()">My games</button>
- <button class="secondary hidden" id="adminNav" onclick="showAdmin()">⚙ Admin</button>
- <span class="user-chip" id="userLabel"></span>
- <button id="authButton" onclick="openAuth()">Sign in</button>
-</div></header>
+<header>
+ <div class="nav">
+  <div class="brand">🎮 Thomas <span>Games</span></div>
+  <button class="secondary" onclick="showPage('home')">Explore</button>
+  <button class="secondary" onclick="showPage('publish')">Publish a game</button>
+  <button class="secondary hidden" id="myGamesButton" onclick="showPage('mine')">My games</button>
+  <button class="secondary hidden" id="adminButton" onclick="showPage('admin')">⚙ Admin</button>
+  <span class="muted" id="userLabel"></span>
+  <button id="authButton" onclick="openAuth()">Sign in</button>
+ </div>
+</header>
+
 <main>
-<section id="homeView">
- <div class="hero"><h1 id="heroTitle">Play something awesome.</h1><p id="heroSubtitle">Discover fun browser games, try something new, and share games you create with the Thomas Games community.</p><div class="hero-actions"><button onclick="document.getElementById('gameSearch').focus()">🎲 Browse games</button><button class="secondary" onclick="showPublish()">＋ Publish your game</button></div></div>
- <div id="siteAnnouncement" class="notice hidden"></div><div class="toolbar"><input id="gameSearch" placeholder="🔎 Search games..." oninput="renderGames()"><select id="categoryFilter" style="max-width:190px" onchange="renderGames()"><option value="All">All categories</option><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option></select></div>
- <div class="section-head"><h2 id="featuredTitle">⭐ Featured games</h2><span class="muted" id="gameCount"></span></div><div class="grid" id="gamesGrid"></div>
-</section>
-<section id="publishView" class="hidden">
- <div class="section-head"><h2>🚀 Publish a game</h2><button class="secondary" onclick="showHome()">← Back</button></div>
- <div id="publishLoginNotice" class="notice hidden">You need to sign in before you can submit a game. Playing games never requires an account.</div>
- <div class="panel"><form id="publishForm" onsubmit="return submitGame(event)"><div class="form-grid">
- <div class="field"><label>Game title</label><input id="gameTitle" maxlength="45" required placeholder="My awesome game"></div>
- <div class="field"><label>Category</label><select id="gameCategory"><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option></select></div>
- <div class="field wide"><label>Description</label><textarea id="gameDescription" maxlength="240" required placeholder="What is your game about?"></textarea></div>
- <div class="field"><label>Game URL (for games that allow embedding)</label><input id="gameUrl" type="url" placeholder="https://example.com/my-game"></div><div class="field wide"><label>Or upload your own HTML game (recommended)</label><input id="gameHtmlFile" type="file" accept=".html,.htm,text/html" onchange="handleGameHtmlUpload(this)"><input type="hidden" id="gameHtmlData"><small class="muted">Upload a self-contained .html game to play it directly inside Thomas Games. Maximum 1 MB.</small><p id="gameHtmlStatus" class="muted" style="font-size:12px"></p></div>
- <div class="field"><label>Cover image (optional)</label><input id="gameCoverFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="handleCoverUpload(this,'gameImageData','gameCoverPreview')"><input type="hidden" id="gameImageData"><img id="gameCoverPreview" class="upload-preview" alt="Game cover preview"><small class="muted">Upload JPG, PNG, WEBP or GIF. If you skip this, the game icon is used.</small></div><div class="field"><label>Fallback emoji</label><input id="gameEmoji" maxlength="4" value="🎮" placeholder="🎮"></div>
- </div><p class="muted" style="font-size:12px">Submissions are reviewed by the Thomas Games admin before appearing publicly. Only submit games you have permission to share.</p><button type="button" id="sendForReviewButton" onclick="submitGame()">Send for review</button><p id="publishMessage" class="muted" role="status" aria-live="polite" style="font-size:13px;margin-bottom:0"></p></form></div>
-</section>
-<section id="gameDetailView" class="hidden">
- <div class="section-head"><h2>🎮 Game details</h2><button class="secondary" onclick="showHome()">← Back to games</button></div>
- <div id="gameDetailContent" class="panel"></div>
-</section>
-<section id="gamePlayerView" class="hidden"><div class="section-head"><h2 id="playerHeading">🎮 Now playing</h2><div class="tabs"><button class="secondary" id="fullscreenButton" onclick="toggleGameFullscreen()">⛶ Fullscreen</button><button class="secondary" onclick="closeGamePlayer()">✕ Close game</button><button class="secondary" onclick="showHome()">Back to games</button></div></div><div class="notice" id="playerNotice">The game is loading inside Thomas Games.</div><div class="notice hidden" id="embedHelp">This website blocks being played inside other websites, so Thomas Games cannot display it here. This is a browser security rule and cannot be bypassed. Ask the creator to upload the game as a self-contained .html file or provide an official embed link.</div><div class="game-frame-wrap"><iframe id="gameFrame" title="Thomas Games embedded game" scrolling="no" sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads allow-presentation" allow="fullscreen; autoplay; gamepad" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></section>
-<section id="myGamesView" class="hidden">
- <div class="section-head"><h2>🧰 My game studio</h2><button class="secondary" onclick="showHome()">← Back</button></div>
- <div class="notice">Manage your own submissions here. You can edit the title, description, category, cover and game link, then send an update for review.</div>
- <div id="myGamesList" class="panel"></div>
-</section>
-<section id="adminView" class="hidden">
- <div class="section-head"><h2>🛠 Creator control centre</h2><button class="secondary" onclick="showHome()">← Back to site</button></div>
- <div class="notice">Admin tools are available only to the creator account in this demo. Changes are stored in this browser.</div>
- <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
-  <div class="panel"><div class="muted">Total games</div><h2 id="statTotal">0</h2></div><div class="panel"><div class="muted">Pending review</div><h2 id="statPending">0</h2></div><div class="panel"><div class="muted">Blocked</div><h2 id="statBlocked">0</h2></div><div class="panel"><div class="muted">Users</div><h2 id="statUsers">0</h2></div>
+<section id="homePage">
+ <div class="hero">
+  <h1>Play something awesome.</h1>
+  <p>Discover fun browser games, try something new, and share games you create with the Thomas Games community!</p>
+  <button onclick="document.getElementById('search').focus()">🎲 Browse games</button>
+  <button class="secondary" onclick="showPage('publish')">＋ Publish your game</button>
  </div>
- <div class="panel"><h3>👑 Original creator profile</h3><p class="muted">Sign in to the original creator account with its password only. Set the public creator name shown on your profile and your games.</p><div class="form-grid"><div class="field"><label>Your public creator name</label><input id="creatorDisplayNameInput" maxlength="32" placeholder="Thomas"></div><div class="field"><label>Creator account</label><input value="Original creator · password sign-in" disabled></div></div><button style="margin-top:10px" onclick="saveCreatorProfile()">Save creator name</button></div>
- <div class="panel"><h3>🚩 Game reports & safety</h3><p class="muted">Players can report a published game. Review reports here and dismiss them or block the game.</p><div id="adminReports"></div></div>
- <div class="panel"><h3>🧰 Platform health</h3><div class="meta-grid" id="platformHealth"></div><div class="tabs"><button class="secondary" onclick="runPlatformAudit()">Run local audit</button><button class="secondary" onclick="downloadGameList()">Download game list (CSV)</button></div><p id="platformAuditResult" class="muted" style="font-size:12px"></p></div>
- <div class="panel"><h3>🕵️ Review queue</h3><p class="muted">Every game waiting for your approval appears here, with its creator and submission date.</p><div id="adminReviewQueue"></div></div>
- <div class="panel"><h3>🎛️ Platform controls</h3><p class="muted">Control whether creators can submit new games and see a quick category breakdown.</p><div class="tabs"><button id="submissionToggle" class="secondary" onclick="toggleSubmissions()">Pause submissions</button><span id="submissionState" class="notice" style="margin:0">Submissions are open</span></div><div id="categoryStats" class="meta-grid"></div></div>
- <div class="panel"><h3>📋 Game moderation</h3>
-  <div class="admin-toolbar"><input id="adminSearch" placeholder="Search games or creators..." oninput="renderAdmin()"><select id="adminStatus" style="max-width:190px" onchange="renderAdmin()"><option value="All">All statuses</option><option value="pending">Pending</option><option value="approved">Published</option><option value="blocked">Blocked</option></select></div>
-  <div id="adminGames"></div></div>
- <div class="panel"><h3>⚡ Quick commands</h3><div class="tabs"><button class="secondary" onclick="adminAction('featureAll')">⭐ Feature all published</button><button class="secondary" onclick="adminAction('unfeatureAll')">Clear featured</button><button class="secondary" onclick="adminAction('approveAll')">Approve all pending</button><button class="secondary" onclick="adminAction('unblockAll')">Unblock all games</button><button class="secondary" onclick="adminAction('export')">📦 Export backup</button><button class="secondary" onclick="adminAction('import')">📥 Import backup</button><button class="danger" onclick="adminAction('clearBlocked')">Delete blocked games</button><button class="danger" onclick="adminAction('deleteAll')">Delete ALL games</button></div><p class="muted" style="font-size:12px">These commands affect the games saved in this browser. Destructive actions ask for confirmation.</p></div>
- <div class="panel"><h3>🎨 Website customizer</h3><p class="muted">Change how Thomas Games looks. These settings apply in this browser.</p>
-  <div class="form-grid">
-   <div class="field"><label>Site name</label><input id="siteNameInput" maxlength="32" placeholder="Thomas Games"></div>
-   <div class="field"><label>Accent colour</label><input id="accentInput" type="color" value="#6c8cff" style="height:46px;padding:5px"></div>
-   <div class="field wide"><label>Homepage headline</label><input id="heroTitleInput" maxlength="70" placeholder="Play something awesome."></div>
-   <div class="field wide"><label>Homepage description</label><textarea id="heroSubtitleInput" maxlength="220" placeholder="Discover fun browser games..."></textarea></div>
-   <div class="field"><label>Featured section title</label><input id="featuredTitleInput" maxlength="40" placeholder="⭐ Featured games"></div>
-   <div class="field"><label>Footer text</label><input id="footerInput" maxlength="100" placeholder="Play freely. Create responsibly."></div>
-   <div class="field wide"><label>Maintenance notice (optional)</label><input id="maintenanceInput" maxlength="160" placeholder="We're updating the site — games are still playable!"></div>
-  </div><div class="tabs" style="margin-top:12px"><button onclick="saveSiteSettings()">💾 Save website design</button><button class="secondary" onclick="resetSiteSettings()">Reset design</button></div>
+ <div class="toolbar">
+  <input id="search" placeholder="🔎 Search games..." oninput="renderGames()">
+  <select id="category" style="max-width:190px" onchange="renderGames()">
+   <option>All</option><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option>
+  </select>
  </div>
- <div class="panel"><h3>🧾 Admin activity log</h3><p class="muted">Recent actions performed in this browser.</p><div id="adminActivity"></div><button class="secondary" onclick="clearActivityLog()">Clear activity log</button></div>
- <div class="panel"><h3>👥 Account overview</h3><p class="muted">See every registered creator, all of their submitted games, and each game’s review status. Pending submissions are listed here too.</p><div id="adminUsers"></div></div>
- <div class="panel"><h3>📢 Site announcement</h3><div class="field"><label>Announcement shown on the home page</label><input id="announcementInput" maxlength="160" placeholder="e.g. New games are arriving this week!"></div><div class="tabs" style="margin-top:10px"><button onclick="saveAnnouncement()">Save announcement</button><button class="secondary" onclick="clearAnnouncement()">Clear</button></div></div>
+ <div class="section-head"><h2>⭐ Games to play</h2><span class="muted" id="gameCount"></span></div>
+ <div class="grid" id="gamesGrid"><div class="empty">Loading games...</div></div>
 </section>
-<div class="footer" id="siteFooter">© 2026 Thomas Games · Play freely. Create responsibly.</div>
+
+<section id="publishPage" class="hidden">
+ <div class="section-head"><h2>🚀 Publish a game</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
+ <div class="notice">Sign in to submit a game. Playing games does not require an account. Games are reviewed before being published.</div>
+ <div class="panel">
+  <form id="publishForm">
+   <div class="form-grid">
+    <div><label>Game title</label><input id="gameTitle" maxlength="45" required placeholder="My awesome game"></div>
+    <div><label>Category</label><select id="gameCategory"><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option></select></div>
+    <div class="wide"><label>Description</label><textarea id="gameDescription" maxlength="500" required placeholder="What is your game about?"></textarea></div>
+    <div class="wide"><label>Game website URL (optional if uploading HTML)</label><input id="gameUrl" type="url" placeholder="https://example.com/game"></div>
+    <div class="wide"><label>Or upload your HTML game</label><input id="gameFile" type="file" accept=".html,.htm,text/html"><small class="muted">HTML files up to 1 MB.</small></div>
+    <div><label>Cover image (optional)</label><input id="coverFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><small class="muted">Images up to 5 MB.</small></div>
+    <div><label>Fallback emoji</label><input id="gameEmoji" maxlength="4" value="🎮"></div>
+   </div>
+   <p class="muted">Only submit games you have permission to share.</p>
+   <button id="submitButton" type="submit">Send for review</button>
+   <p id="publishMessage" role="status"></p>
+  </form>
+ </div>
+</section>
+
+<section id="minePage" class="hidden">
+ <div class="section-head"><h2>🧰 My games</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
+ <div class="panel" id="myGamesList">Loading...</div>
+</section>
+
+<section id="adminPage" class="hidden">
+ <div class="section-head"><h2>👑 Creator control centre</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
+ <div class="notice">Only the account you have given admin access can use these controls.</div>
+ <div class="panel"><h3>Review queue</h3><div id="reviewQueue">Loading...</div></div>
+ <div class="panel">
+  <h3>All games</h3>
+  <div class="toolbar">
+   <input id="adminSearch" placeholder="Search games..." oninput="renderAdmin()">
+   <select id="adminStatus" onchange="renderAdmin()" style="max-width:180px"><option>All</option><option>pending</option><option>approved</option><option>blocked</option></select>
+  </div>
+  <div id="adminGames"></div>
+ </div>
+</section>
+
+<section id="playPage" class="hidden">
+ <div class="section-head"><h2 id="playerTitle">🎮 Now playing</h2><div class="actions"><button class="secondary" onclick="toggleFullscreen()">⛶ Fullscreen</button><button class="secondary" onclick="showPage('home')">✕ Close</button></div></div>
+ <iframe id="player" title="Game player" sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads allow-presentation" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
+ <p class="muted" id="playerMessage"></p>
+</section>
+
+<div class="footer">© 2026 Thomas Games · Play freely. Create responsibly.</div>
 </main>
-<div class="modal-back hidden" id="editModal"><div class="modal" style="width:min(620px,100%)"><button class="close" onclick="closeEdit()">✕</button><h2>✏️ Edit game</h2><form id="editForm" onsubmit="saveGameEdit(event)"><input type="hidden" id="editGameId"><div class="form-grid"><div class="field"><label>Game title</label><input id="editTitle" maxlength="45" required></div><div class="field"><label>Category</label><select id="editCategory"><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option></select></div><div class="field wide"><label>Description</label><textarea id="editDescription" maxlength="500" required></textarea></div><div class="field"><label>Game URL (optional if HTML game uploaded)</label><input id="editUrl" type="url"></div><div class="field"><label>Cover image (optional)</label><input id="editCoverFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="handleCoverUpload(this,'editImageData','editCoverPreview')"><input type="hidden" id="editImageData"><img id="editCoverPreview" class="upload-preview" alt="Updated cover preview"></div><div class="field"><label>Fallback emoji</label><input id="editEmoji" maxlength="4"></div><div class="field"><label>Version</label><input id="editVersion" maxlength="20" placeholder="e.g. 1.1"></div><div class="field"><label>Update notes</label><input id="editNotes" maxlength="120" placeholder="What changed?"></div></div><p class="muted" style="font-size:12px">If you edit a published game, it will be sent back for review before the updated version is shown.</p><button type="submit">Save and submit update</button></form></div></div>
-<div class="modal-back hidden" id="authModal" onclick="if(event.target===this)closeAuth()"><div class="modal"><button class="close" onclick="closeAuth()">✕</button><h2 id="authTitle">Welcome back</h2><div class="tabs"><button type="button" id="loginTab" class="active" onclick="setAuthMode('login')">Sign in</button><button type="button" id="signupTab" class="secondary" onclick="setAuthMode('signup')">Create account</button></div><form id="authForm" onsubmit="return authSubmit(event)" novalidate><div class="field" id="authUsernameField"><label>Username <span class="muted">(not needed for original creator)</span></label><input id="authName" maxlength="24" autocomplete="username" placeholder="Your username"></div><div class="field"><label>Password</label><input id="authPass" type="password" autocomplete="current-password" placeholder="Password" oninput="document.getElementById('authUsernameField').classList.toggle('hidden',authMode==='login'&&this.value==='ThomasAdmin2026!')"></div><p class="muted" id="authError" style="font-size:12px"></p><button type="button" id="authSubmitButton" onclick="authSubmit(null)" style="width:100%">Sign in</button></form></div></div>
+
+<div class="modal-back hidden" id="authModal">
+ <div class="modal">
+  <div class="section-head"><h2 id="authTitle">Welcome to Thomas Games</h2><button class="secondary" onclick="closeAuth()">✕</button></div>
+  <div class="tabs">
+   <button id="loginTab" onclick="setAuthMode('login')">Sign in</button>
+   <button id="signupTab" class="secondary" onclick="setAuthMode('signup')">Create account</button>
+  </div>
+  <form id="authForm">
+   <label>Email address</label><input id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com">
+   <label>Password</label><input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="At least 6 characters">
+   <p id="authMessage" class="muted" role="status"></p>
+   <button id="authSubmit" type="submit">Sign in</button>
+  </form>
+ </div>
+</div>
+
 <script>
-const KEY='thomasGamesDemo_v2';
+/* THOMAS GAMES CONFIGURATION */
+const SUPABASE_URL = "https://wtlxgzyzhpufkkqevxsp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_HbyxJOh72u7q1vin37fDLA_-N39sU2f";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let data=loadData(), currentUser=null, authMode='login';if(!Array.isArray(data.reports))data.reports=[];
-function loadData(){
- const empty={games:[],users:[],reports:[],announcement:'',settings:{},activity:[]};
- try{
-  const saved=JSON.parse(window.localStorage.getItem(KEY)||'null');
-  if(!saved || typeof saved!=='object') return empty;
-  return {games:Array.isArray(saved.games)?saved.games.filter(g=>g&&typeof g==='object'&&g.id&&g.title):[],reports:Array.isArray(saved.reports)?saved.reports:[],users:Array.isArray(saved.users)?saved.users.filter(u=>u&&typeof u==='object'&&u.name):[],announcement:typeof saved.announcement==='string'?saved.announcement:'',settings:saved.settings&&typeof saved.settings==='object'?saved.settings:{},activity:Array.isArray(saved.activity)?saved.activity:[]};
- }catch(e){return empty;}
-}
-function saveData(){
- try{window.localStorage.setItem(KEY,JSON.stringify(data));return true;}
- catch(e){return false;}
-}
-function escapeHTML(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function showView(id){['homeView','publishView','adminView','gameDetailView','gamePlayerView','myGamesView'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id))}
-function showHome(){const f=document.getElementById('gameFrame');if(f)f.src='about:blank';showView('homeView');renderGames()}
-function showPublish(){showView('publishView');document.getElementById('publishLoginNotice').classList.toggle('hidden',!!currentUser);document.getElementById('publishForm').classList.toggle('hidden',!currentUser)}
-function showAdmin(){if(!isAdmin()){alert('Creator access only.');return}showView('adminView');renderAdmin()}
-function isAdmin(){return currentUser?.role==='admin'}
-function logAdmin(message){if(!Array.isArray(data.activity))data.activity=[];data.activity.unshift({message:String(message),at:new Date().toLocaleString()});data.activity=data.activity.slice(0,40);saveData()}
-function applySiteSettings(){const x=data.settings||{};const name=x.siteName||'Thomas Games';document.getElementById('brandLabel').textContent='🎮 '+name;document.title=name;document.getElementById('heroTitle').textContent=x.heroTitle||'Play something awesome.';document.getElementById('heroSubtitle').textContent=x.heroSubtitle||'Discover fun browser games, try something new, and share games you create with the Thomas Games community.';document.getElementById('featuredTitle').textContent=x.featuredTitle||'⭐ Featured games';document.getElementById('siteFooter').textContent='© 2026 '+name+' · '+(x.footer||'Play freely. Create responsibly.');document.documentElement.style.setProperty('--blue',x.accent||'#6c8cff');let maintenance=document.getElementById('maintenanceNotice');if(!maintenance){maintenance=document.createElement('div');maintenance.id='maintenanceNotice';maintenance.className='notice hidden';document.getElementById('homeView').insertBefore(maintenance,document.getElementById('siteAnnouncement'))}maintenance.textContent=x.maintenance||'';maintenance.classList.toggle('hidden',!x.maintenance)}
-function saveSiteSettings(){if(!isAdmin())return;data.settings={...(data.settings||{}),siteName:document.getElementById('siteNameInput').value.trim()||'Thomas Games',accent:document.getElementById('accentInput').value||'#6c8cff',heroTitle:document.getElementById('heroTitleInput').value.trim(),heroSubtitle:document.getElementById('heroSubtitleInput').value.trim(),featuredTitle:document.getElementById('featuredTitleInput').value.trim(),footer:document.getElementById('footerInput').value.trim(),maintenance:document.getElementById('maintenanceInput').value.trim()};if(!saveData()){alert('Could not save settings. Browser storage may be disabled or full.');return}applySiteSettings();logAdmin('Updated website appearance and homepage settings');renderAdmin();alert('Website customizations saved!')}
-function resetSiteSettings(){if(!isAdmin()||!confirm('Reset the website design to its defaults?'))return;data.settings={creatorDisplayName:(data.settings&&data.settings.creatorDisplayName)||'Thomas'};saveData();applySiteSettings();logAdmin('Reset website appearance to defaults');renderAdmin()}
-function clearActivityLog(){if(!isAdmin()||!confirm('Clear the admin activity log?'))return;data.activity=[];saveData();renderAdmin()}
+let currentUser = null;
+let currentProfile = null;
+let authMode = "login";
+let games = [];
 
-function updateHeader(){document.getElementById('userLabel').textContent=currentUser?`👤 ${currentUser.name}${isAdmin()?' · OG CREATOR':''}`:'';document.getElementById('authButton').textContent=currentUser?'Sign out':'Sign in';document.getElementById('authButton').onclick=()=>currentUser?logout():openAuth();document.getElementById('adminNav').classList.toggle('hidden',!isAdmin());document.getElementById('myGamesNav').classList.toggle('hidden',!currentUser)}
-function coverMarkup(g,cls='cover'){return g.image?`<div class="${cls}"><img src="${g.image}" alt="${escapeHTML(g.title)} cover"></div>`:`<div class="${cls}">${escapeHTML(g.emoji||'🎮')}</div>`}
-function renderGames(){let q=(document.getElementById('gameSearch')?.value||'').toLowerCase(),cat=document.getElementById('categoryFilter')?.value||'All';let games=data.games.filter(g=>g.status==='approved'&&(cat==='All'||g.category===cat)&&(`${g.title} ${g.description} ${g.category} ${g.owner||''}`).toLowerCase().includes(q));games.sort((a,b)=>Number(b.featured)-Number(a.featured));document.getElementById('gameCount').textContent=`${games.length} games`;let grid=document.getElementById('gamesGrid');grid.innerHTML=games.length?games.map(g=>`<article class="game">${coverMarkup(g)}<div class="game-body"><div class="tags"><span class="tag">${escapeHTML(g.category)}</span>${g.featured?'<span class="tag">⭐ Featured</span>':''}</div><h3>${escapeHTML(g.title)}</h3><p>${escapeHTML(g.description)}</p><p>👤 Creator: <strong>${escapeHTML(g.owner||'Unknown')}</strong></p><div class="game-actions"><button onclick="playGame('${g.id}')">▶ Play</button><button class="secondary" onclick="showGameDetails('${g.id}')">Details</button></div></div></article>`).join(''):'<div class="empty" style="grid-column:1/-1">No games found. Try another search.</div>';let ann=document.getElementById('siteAnnouncement');ann.textContent=data.announcement||'';ann.classList.toggle('hidden',!data.announcement)}
-function showGameDetails(id){let g=data.games.find(x=>x.id===id&&x.status==='approved');if(!g)return;showView('gameDetailView');document.getElementById('gameDetailContent').innerHTML=`<div class="detail-hero">${coverMarkup(g,'detail-cover')}<div><div class="tags"><span class="tag">${escapeHTML(g.category)}</span>${g.featured?'<span class="tag">⭐ Featured</span>':''}</div><h1 style="font-size:38px">${escapeHTML(g.title)}</h1><p class="muted">Created by <strong>${escapeHTML(g.owner||'Unknown')}</strong></p><button onclick="playGame('${g.id}')">▶ Play game</button></div></div><div class="meta-grid"><div class="meta">Creator<strong>${escapeHTML(g.owner||'Unknown')}</strong></div><div class="meta">Version<strong>${escapeHTML(g.version||'1.0')}</strong></div><div class="meta">Last updated<strong>${escapeHTML(g.updatedAt||g.createdAt||'Not provided')}</strong></div><div class="meta">Category<strong>${escapeHTML(g.category)}</strong></div></div><h2>About this game</h2><p>${escapeHTML(g.description)}</p><button class="secondary" onclick="reportGame('${g.id}')">🚩 Report this game</button>${g.updateNotes?`<h3>Latest update</h3><p>${escapeHTML(g.updateNotes)}</p>`:''}<div style="margin-top:22px"><button onclick="playGame('${g.id}')">Play now</button> <button class="secondary" onclick="showHome()">Back to explore</button></div>`}
-function playGame(id){
- const g=data.games.find(x=>x.id===id&&x.status==='approved');if(!g)return;
- const frame=document.getElementById('gameFrame'),help=document.getElementById('embedHelp');
- document.getElementById('playerHeading').textContent='🎮 '+g.title;
- help.classList.add('hidden');frame.removeAttribute('srcdoc');frame.src='about:blank';
- if(g.htmlData){document.getElementById('playerNotice').textContent='Playing '+g.title+' by '+(g.owner||'Unknown')+' — uploaded HTML running inside Thomas Games.';frame.srcdoc=prepareGameHTML(g.htmlData);}
- else {const u=safeUrl(g.url);if(!u){alert('This game has no playable HTML file or valid URL.');return}document.getElementById('playerNotice').textContent='Loading '+g.title+' inside Thomas Games. If the website blocks embedding, use the help note below.';frame.src=u;help.classList.remove('hidden');}
- showView('gamePlayerView');
- document.getElementById('gamePlayerView').classList.remove('player-fullscreen');
- document.getElementById('fullscreenButton').textContent='⛶ Fullscreen';
-}
-function prepareGameHTML(html){
- const fitCSS='<style id=\"thomas-games-fit\">html,body{width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}body{overscroll-behavior:none}canvas,video,iframe{max-width:100%;max-height:100%}canvas{display:block;touch-action:none}</style>';
- if(/<\/head>/i.test(html)) return html.replace(/<\/head>/i,fitCSS+'</head>');
- return fitCSS+html;
-}
-async function toggleGameFullscreen(){
- const view=document.getElementById('gamePlayerView'),wrap=document.querySelector('.game-frame-wrap'),frame=document.getElementById('gameFrame');
- try{
-  if(!document.fullscreenElement){await (wrap.requestFullscreen?wrap.requestFullscreen():view.requestFullscreen());view.classList.add('player-fullscreen');document.getElementById('fullscreenButton').textContent='⤢ Exit fullscreen';}
-  else{await document.exitFullscreen();view.classList.remove('player-fullscreen');document.getElementById('fullscreenButton').textContent='⛶ Fullscreen';}
- }catch(err){alert('Fullscreen is not available in this browser. Try pressing F11 instead.');}
-}
-document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement,view=document.getElementById('gamePlayerView');view.classList.toggle('player-fullscreen',active);const b=document.getElementById('fullscreenButton');if(b)b.textContent=active?'⤢ Exit fullscreen':'⛶ Fullscreen';});
-function closeGamePlayer(){const f=document.getElementById('gameFrame');if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});f.src='about:blank';showHome()}
-function safeUrl(value){try{let u=new URL(value);return ['http:','https:'].includes(u.protocol)?u.href:null}catch(e){return null}}
-function openAuth(){document.getElementById('authModal').classList.remove('hidden');setAuthMode('login')}
-function closeAuth(){document.getElementById('authModal').classList.add('hidden')}
-function setAuthMode(mode){authMode=mode;document.getElementById('authUsernameField').classList.toggle('hidden',false);document.getElementById('authTitle').textContent=mode==='login'?'Welcome back':'Join Thomas Games';document.getElementById('authSubmitButton').textContent=mode==='login'?'Sign in':'Create account';document.getElementById('loginTab').className=mode==='login'?'':'secondary';document.getElementById('signupTab').className=mode==='signup'?'':'secondary';document.getElementById('authError').textContent=''}
-function authSubmit(e){
- if(e && typeof e.preventDefault==='function') e.preventDefault();
- const name=String(document.getElementById('authName').value||'').trim();
- const pass=String(document.getElementById('authPass').value||'');
- const error=document.getElementById('authError');error.textContent='';
- // The original creator can authenticate with the creator password alone.
- if(authMode==='login' && pass==='ThomasAdmin2026!'){
-  const display=(data.settings&&data.settings.creatorDisplayName)||'Thomas';
-  currentUser={name:display,role:'admin'};closeAuth();updateHeader();showAdmin();return false;
- }
- if(!name || !pass){error.textContent='Enter your username and password. The original creator only needs the password.';return false;}
- if(name.length<3){error.textContent='Username must be at least 3 characters.';return false;}
- if(authMode==='signup'){
-  if(pass.length<4){error.textContent='Password must be at least 4 characters.';return false;}
-  if(name.toLowerCase()==='creator'){error.textContent='That username is reserved.';return false;}
-  if(data.users.some(u=>String(u.name||'').toLowerCase()===name.toLowerCase())){error.textContent='That username is already registered. Choose Sign in instead.';return false;}
-  data.users.push({name,pass});const saved=saveData();currentUser={name,role:'user'};closeAuth();updateHeader();showHome();if(!saved)alert('Signed in for this session, but this browser could not save your account.');else alert('Account created!');return false;
- }
- const found=data.users.find(u=>String(u.name||'').toLowerCase()===name.toLowerCase());
- if(!found){error.textContent='No account with that username is saved in this browser. Create an account first.';return false;}
- if(found.suspended){error.textContent='This account has been suspended by the original creator.';return false;}
- if(String(found.pass)!==pass){error.textContent='Incorrect password. Please try again.';return false;}
- currentUser={name:found.name,role:'user'};closeAuth();updateHeader();showHome();return false;
-}
-function logout(){currentUser=null;updateHeader();showHome()}
-function handleCoverUpload(input,hiddenId,previewId){const file=input.files&&input.files[0];const hidden=document.getElementById(hiddenId),preview=document.getElementById(previewId);if(!file){hidden.value='';preview.style.display='none';return}if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)){alert('Please choose a PNG, JPG, WEBP or GIF image.');input.value='';return}if(file.size>5*1024*1024){alert('Please choose an image smaller than 5 MB.');input.value='';return}const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const maxW=720,maxH=420,scale=Math.min(1,maxW/img.width,maxH/img.height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);const dataUrl=canvas.toDataURL('image/jpeg',0.78);hidden.value=dataUrl;preview.src=dataUrl;preview.style.display='block'};img.onerror=()=>alert('That image could not be read. Try another image.');img.src=reader.result};reader.readAsDataURL(file)}
+const $ = id => document.getElementById(id);
+const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+})[c]);
 
-function handleGameHtmlUpload(input){
- const file=input.files&&input.files[0],status=document.getElementById('gameHtmlStatus'),hidden=document.getElementById('gameHtmlData');
- hidden.value='';if(!file){status.textContent='';return}
- if(!/\.html?$/i.test(file.name)||file.size>1024*1024){alert('Choose an HTML file smaller than 1 MB.');input.value='';status.textContent='';return}
- const reader=new FileReader();reader.onload=()=>{const content=String(reader.result||'');if(!/<html[\s>]/i.test(content)&&!/<canvas|<body|<script/i.test(content)){alert('That file does not look like an HTML game.');input.value='';return}hidden.value=content;status.textContent='✓ '+file.name+' ready to submit. You can play this upload inside Thomas Games.'};reader.onerror=()=>{alert('Could not read that HTML file.');input.value=''};reader.readAsText(file);
+function showPage(page) {
+ ["home","publish","mine","admin","play"].forEach(p => $(p+"Page").classList.toggle("hidden",p!==page));
+ if(page==="home") renderGames();
+ if(page==="mine") loadMyGames();
+ if(page==="admin") loadAdmin();
+ if(page==="publish" && !currentUser) openAuth();
+ if(page==="play") {}
+ window.scrollTo(0,0);
 }
 
-function submitGame(e){
- if(e && typeof e.preventDefault==='function') e.preventDefault();
- const form=document.getElementById('publishForm');
- const message=document.getElementById('publishMessage');
- const button=document.getElementById('sendForReviewButton');
- if(message) message.textContent='';
- if(!currentUser){
-  if(message) message.textContent='Please sign in first. Your game details will stay on this page.';
-  openAuth();
-  return false;
- }
- if(data.settings?.submissionsPaused && !isAdmin()){
-  if(message) message.textContent='Game submissions are temporarily paused by the Thomas Games creator. Please try again later.';
-  return false;
- }
- if(!form.checkValidity()){
-  form.reportValidity();
-  return false;
- }
- const title=document.getElementById('gameTitle').value.trim();
- const description=document.getElementById('gameDescription').value.trim();
- const rawUrl=document.getElementById('gameUrl').value.trim();
- const url=rawUrl?safeUrl(rawUrl):null;
- const htmlData=document.getElementById('gameHtmlData').value||'';
- if(!title || !description){
-  if(message) message.textContent='Please fill in the game title and description.';
-  return false;
- }
- if(!url&&!htmlData){
-  if(message) message.textContent='Add a valid game URL or upload a self-contained HTML game file.';
-  document.getElementById('gameUrl').focus();
-  return false;
- }
- const game={
-  id:'g'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
-  title,
-  category:document.getElementById('gameCategory').value,
-  description,
-  url:url||'',htmlData,
-  emoji:document.getElementById('gameEmoji').value.trim()||'🎮',
-  image:document.getElementById('gameImageData').value||'',
-  status:'pending',featured:false,owner:currentUser.name,version:'1.0',
-  createdAt:new Date().toLocaleDateString(),updatedAt:new Date().toLocaleDateString()
- };
- data.games.push(game);
- const saved=saveData();
- if(!saved){
-  data.games=data.games.filter(g=>g.id!==game.id);
-  if(message) message.textContent='Could not save your submission in this browser. Check that browser storage is enabled, then try again.';
-  return false;
- }
- form.reset();
- document.getElementById('gameEmoji').value='🎮';document.getElementById('gameImageData').value='';document.getElementById('gameCoverFile').value='';document.getElementById('gameCoverPreview').style.display='none';document.getElementById('gameHtmlData').value='';document.getElementById('gameHtmlFile').value='';document.getElementById('gameHtmlStatus').textContent='';
- if(message) message.textContent='✅ Submitted for review! The Thomas Games creator can now approve it.';
- if(button){button.textContent='Submitted!';button.disabled=true;setTimeout(()=>{button.textContent='Send for review';button.disabled=false;},1800)}
- renderMyGames();
- renderAdmin();
- return false;
+function openAuth() {
+ $("authModal").classList.remove("hidden");
+ setAuthMode("login");
 }
-function showMyGames(){if(!currentUser){openAuth();return}showView('myGamesView');renderMyGames()}
-function renderMyGames(){let mine=data.games.filter(g=>g.owner===currentUser.name);let box=document.getElementById('myGamesList');box.innerHTML=mine.length?mine.map(g=>`<div class="admin-row"><div><strong>${escapeHTML(g.emoji||'🎮')} ${escapeHTML(g.title)}</strong><div class="muted" style="font-size:12px">${escapeHTML(g.category)} · <span class="status ${g.status}">${String(g.status).toUpperCase()}</span> · v${escapeHTML(g.version||'1.0')}</div><div class="muted" style="font-size:12px">${escapeHTML(g.updateNotes||'No update notes')}</div></div><div class="admin-actions"><button onclick="openEdit('${g.id}')">✏️ Edit / Update</button><button class="secondary" onclick="showGameDetails('${g.id}')" ${g.status!=='approved'?'disabled':''}>View</button><button class="danger" onclick="deleteMyGame('${g.id}')">Delete</button></div></div>`).join(''):'<div class="empty">You have not submitted any games yet. Use “Publish a game” to add your first one.</div>'}
-function deleteMyGame(id){let g=data.games.find(x=>x.id===id);if(!g||g.owner!==currentUser?.name)return;if(!confirm(`Delete your game \"${g.title}\"?`))return;data.games=data.games.filter(x=>x.id!==id);saveData();renderMyGames();renderGames()}
-function openEdit(id){let g=data.games.find(x=>x.id===id);if(!g||(!isAdmin()&&g.owner!==currentUser?.name)){alert('You can only edit your own games.');return}document.getElementById('editGameId').value=id;document.getElementById('editTitle').value=g.title;document.getElementById('editCategory').value=g.category;document.getElementById('editDescription').value=g.description;document.getElementById('editUrl').value=g.url;document.getElementById('editEmoji').value=g.emoji||'🎮';document.getElementById('editImageData').value=g.image||'';document.getElementById('editCoverFile').value='';const ep=document.getElementById('editCoverPreview');ep.src=g.image||'';ep.style.display=g.image?'block':'none';document.getElementById('editVersion').value=g.version||'1.0';document.getElementById('editNotes').value='';document.getElementById('editModal').classList.remove('hidden')}
-function closeEdit(){document.getElementById('editModal').classList.add('hidden')}
-function saveGameEdit(e){e.preventDefault();let id=document.getElementById('editGameId').value,g=data.games.find(x=>x.id===id);if(!g||(!isAdmin()&&g.owner!==currentUser?.name))return;const original=JSON.stringify(g);let rawEditUrl=document.getElementById('editUrl').value.trim(),url=rawEditUrl?safeUrl(rawEditUrl):null;if(!url&&!g.htmlData){alert('Enter a valid http/https URL or keep an uploaded HTML game.');return}g.title=document.getElementById('editTitle').value.trim();g.category=document.getElementById('editCategory').value;g.description=document.getElementById('editDescription').value.trim();g.url=url||'';g.emoji=document.getElementById('editEmoji').value.trim()||'🎮';g.image=document.getElementById('editImageData').value||g.image||'';g.version=document.getElementById('editVersion').value.trim()||'1.0';g.updateNotes=document.getElementById('editNotes').value.trim();g.updatedAt=new Date().toLocaleDateString();if(!isAdmin())g.status='pending';if(!saveData()){Object.assign(g,JSON.parse(original));alert('Could not save this update. Check browser storage and try again.');return}if(isAdmin())logAdmin('Edited game '+g.title);closeEdit();renderMyGames();renderAdmin();renderGames();alert(isAdmin()?'Game updated.':'Update submitted for creator review!')}
-function renderAdmin(){
+function closeAuth() {$("authModal").classList.add("hidden");}
+function setAuthMode(mode) {
+ authMode=mode;
+ $("authTitle").textContent=mode==="login"?"Welcome back!":"Create your account";
+ $("authSubmit").textContent=mode==="login"?"Sign in":"Create account";
+ $("loginTab").className=mode==="login"?"":"secondary";
+ $("signupTab").className=mode==="signup"?"":"secondary";
+ $("authMessage").textContent="";
+ $("authPassword").autocomplete=mode==="login"?"current-password":"new-password";
+}
+
+async function loadProfile() {
+ if(!currentUser) {currentProfile=null;return;}
+ const {data,error}=await db.from("profiles").select("id,username,role").eq("id",currentUser.id).maybeSingle();
+ if(error) console.error("Profile:",error.message);
+ currentProfile=data||{id:currentUser.id,username:currentUser.email.split("@")[0],role:"user"};
+}
+
+function updateHeader() {
+ const admin=currentProfile?.role==="admin";
+ $("userLabel").textContent=currentUser?"👤 "+(currentProfile?.username||currentUser.email):"";
+ $("authButton").textContent=currentUser?"Sign out":"Sign in";
+ $("authButton").onclick=currentUser?signOut:openAuth;
+ $("myGamesButton").classList.toggle("hidden",!currentUser);
+ $("adminButton").classList.toggle("hidden",!admin);
+}
+
+$("authForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const email=$("authEmail").value.trim();
+ const password=$("authPassword").value;
+ const button=$("authSubmit");
+ button.disabled=true;
+ $("authMessage").textContent="Please wait...";
+ try {
+  if(authMode==="signup") {
+   const {data,error}=await db.auth.signUp({email,password});
+   if(error) throw error;
+   if(data.session) {
+    currentUser=data.user;
+    await loadProfile();
+    updateHeader();
+    closeAuth();
+    showPage("home");
+    alert("Your account has been created!");
+   } else {
+    $("authMessage").textContent="Check your email to confirm your account, then sign in.";
+   }
+  } else {
+   const {data,error}=await db.auth.signInWithPassword({email,password});
+   if(error) throw error;
+   currentUser=data.user;
+   await loadProfile();
+   updateHeader();
+   closeAuth();
+   showPage("home");
+  }
+ } catch(err) {
+  $("authMessage").textContent=err.message||"Something went wrong.";
+ } finally {button.disabled=false;}
+});
+
+async function signOut() {
+ await db.auth.signOut();
+ currentUser=null;currentProfile=null;
+ updateHeader();showPage("home");
+}
+
+async function restoreSession() {
+ const {data}=await db.auth.getSession();
+ currentUser=data.session?.user||null;
+ if(currentUser) await loadProfile();
+ updateHeader();
+ await loadGames();
+}
+db.auth.onAuthStateChange(async(_event,session)=>{
+ currentUser=session?.user||null;
+ if(currentUser) await loadProfile(); else currentProfile=null;
+ updateHeader();
+});
+
+async function loadGames() {
+ const {data,error}=await db.from("games")
+  .select("id,owner_id,title,description,category,game_url,game_file_path,cover_path,status,featured,version,created_at")
+  .eq("status","approved")
+  .order("created_at",{ascending:false});
+ if(error) {
+  console.error(error);
+  $("gamesGrid").innerHTML='<div class="empty">Could not load games. Check your Supabase settings.</div>';
+  return;
+ }
+ games=data||[];
+ await addCreatorNames(games);
+ renderGames();
+}
+
+async function addCreatorNames(list) {
+ const ids=[...new Set(list.map(g=>g.owner_id).filter(Boolean))];
+ if(!ids.length) return;
+ const {data}=await db.from("profiles").select("id,username").in("id",ids);
+ const names={};
+ (data||[]).forEach(p=>names[p.id]=p.username);
+ list.forEach(g=>g.creatorName=names[g.owner_id]||"Player");
+}
+
+function coverHTML(game) {
+ if(game.cover_path) {
+  const {data}=db.storage.from("game-files").getPublicUrl(game.cover_path);
+  return `<div class="cover"><img src="${escapeHTML(data.publicUrl)}" alt="Game cover"></div>`;
+ }
+ return `<div class="cover">${escapeHTML(game.emoji||"🎮")}</div>`;
+}
+
+function renderGames() {
+ const q=($("search").value||"").toLowerCase();
+ const category=$("category").value;
+ const filtered=games.filter(g=>
+  (category==="All"||g.category===category) &&
+  `${g.title} ${g.description} ${g.category} ${g.creatorName||""}`.toLowerCase().includes(q)
+ );
+ filtered.sort((a,b)=>Number(b.featured)-Number(a.featured));
+ $("gameCount").textContent=filtered.length+" games";
+ $("gamesGrid").innerHTML=filtered.length?filtered.map(g=>`
+  <article class="game">
+   ${coverHTML(g)}
+   <div class="game-body">
+    <div><span class="tag">${escapeHTML(g.category)}</span>${g.featured?'<span class="tag">⭐ Featured</span>':""}</div>
+    <h3>${escapeHTML(g.title)}</h3>
+    <p>${escapeHTML(g.description)}</p>
+    <p>👤 ${escapeHTML(g.creatorName||"Player")}</p>
+    <div class="game-actions">
+     <button onclick="playGame('${g.id}')">▶ Play</button>
+     <button class="secondary" onclick="showDetails('${g.id}')">Details</button>
+    </div>
+   </div>
+  </article>`).join(""):'<div class="empty" style="grid-column:1/-1">No games found yet. Try another search!</div>';
+}
+
+function showDetails(id) {
+ const g=games.find(x=>x.id===id);
+ if(!g)return;
+ alert(g.title+"\n\n"+g.description+"\n\nCategory: "+g.category+"\nCreator: "+(g.creatorName||"Player"));
+}
+
+function playGame(id) {
+ const g=games.find(x=>x.id===id);
+ if(!g)return;
+ let url=g.game_url;
+ if(g.game_file_path) {
+  url=db.storage.from("game-files").getPublicUrl(g.game_file_path).data.publicUrl;
+ }
+ if(!url) {alert("This game does not have a playable file or URL.");return;}
+ $("playerTitle").textContent="🎮 "+g.title;
+ $("playerMessage").textContent="Playing "+g.title;
+ $("player").src=url;
+ showPage("play");
+}
+function toggleFullscreen() {
+ const frame=$("player");
+ if(document.fullscreenElement) document.exitFullscreen();
+ else frame.requestFullscreen?.();
+}
+
+async function uploadFile(file,path,contentType) {
+ const {error}=await db.storage.from("game-files").upload(path,file,{upsert:false,contentType});
+ if(error) throw error;
+ return path;
+}
+
+$("publishForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ if(!currentUser) {openAuth();return;}
+ const title=$("gameTitle").value.trim();
+ const description=$("gameDescription").value.trim();
+ const category=$("gameCategory").value;
+ const rawUrl=$("gameUrl").value.trim();
+ const htmlFile=$("gameFile").files[0];
+ const coverFile=$("coverFile").files[0];
+ const button=$("submitButton");
+ $("publishMessage").textContent="";
+ if(!title||!description) return;
+ if(!rawUrl&&!htmlFile) {
+  $("publishMessage").textContent="Add a game URL or upload an HTML game.";
+  return;
+ }
+ if(rawUrl&&!/^https?:\/\//i.test(rawUrl)) {
+  $("publishMessage").textContent="Please use a valid HTTPS or HTTP game URL.";
+  return;
+ }
+ if(htmlFile&&htmlFile.size>1024*1024) {
+  $("publishMessage").textContent="Your HTML file must be 1 MB or smaller.";
+  return;
+ }
+ if(coverFile&&coverFile.size>5*1024*1024) {
+  $("publishMessage").textContent="Your cover image must be 5 MB or smaller.";
+  return;
+ }
+ button.disabled=true;
+ button.textContent="Uploading...";
+ try {
+  const folder=currentUser.id+"/"+crypto.randomUUID();
+  let gamePath=null,coverPath=null;
+  if(htmlFile) gamePath=await uploadFile(htmlFile,folder+"/game.html","text/html");
+  if(coverFile) coverPath=await uploadFile(coverFile,folder+"/cover-"+coverFile.name.replace(/[^a-zA-Z0-9._-]/g,"_"),coverFile.type);
+  const gameUrl=gamePath?db.storage.from("game-files").getPublicUrl(gamePath).data.publicUrl:rawUrl;
+  const {error}=await db.from("games").insert({
+   owner_id:currentUser.id,
+   title,
+   description,
+   category,
+   game_url:gameUrl||null,
+   game_file_path:gamePath,
+   cover_path:coverPath,
+   status:"pending",
+   featured:false,
+   version:"1.0"
+  });
+  if(error) throw error;
+  $("publishForm").reset();
+  $("gameEmoji").value="🎮";
+  $("publishMessage").textContent="✅ Submitted! Your game is waiting for admin approval.";
+ } catch(err) {
+  console.error(err);
+  $("publishMessage").textContent="Upload failed: "+(err.message||"Please try again.");
+ } finally {
+  button.disabled=false;
+  button.textContent="Send for review";
+ }
+});
+
+async function loadMyGames() {
+ if(!currentUser) {openAuth();return;}
+ $("myGamesList").textContent="Loading your games...";
+ const {data,error}=await db.from("games")
+  .select("*").eq("owner_id",currentUser.id).order("created_at",{ascending:false});
+ if(error) {
+  $("myGamesList").textContent="Could not load your games: "+error.message;
+  return;
+ }
+ $("myGamesList").innerHTML=data.length?data.map(g=>`
+  <div class="row">
+   <div><strong>${escapeHTML(g.title)}</strong>
+    <div class="muted">${escapeHTML(g.category)} · <span class="status ${escapeHTML(g.status)}">${escapeHTML(g.status.toUpperCase())}</span></div>
+   </div>
+   <div class="row-actions"><button class="danger" onclick="deleteOwnGame('${g.id}')">Delete</button></div>
+  </div>`).join(""):'<div class="empty">You have not submitted any games yet.</div>';
+}
+
+async function deleteOwnGame(id) {
+ if(!confirm("Delete this game?"))return;
+ const {error}=await db.from("games").delete().eq("id",id).eq("owner_id",currentUser.id);
+ if(error) {alert(error.message);return;}
+ loadMyGames();loadGames();
+}
+
+function isAdmin() {return currentProfile?.role==="admin";}
+
+async function loadAdmin() {
+ if(!isAdmin()) {alert("Admin access only.");showPage("home");return;}
+ const {data,error}=await db.from("games").select("*").order("created_at",{ascending:false});
+ if(error) {
+  $("reviewQueue").textContent=error.message;
+  $("adminGames").textContent=error.message;
+  return;
+ }
+ const all=data||[];
+ await addCreatorNames(all);
+ const pending=all.filter(g=>g.status==="pending");
+ $("reviewQueue").innerHTML=pending.length?pending.map(g=>adminRow(g,true)).join(""):'<div class="empty">🎉 No games waiting for review.</div>';
+ renderAdmin(all);
+}
+
+function adminRow(g,review=false) {
+ return `<div class="row">
+  <div><strong>${escapeHTML(g.title)}</strong>
+   <div class="muted">${escapeHTML(g.category)} · by ${escapeHTML(g.creatorName||"Player")} · <span class="status ${escapeHTML(g.status)}">${escapeHTML(g.status.toUpperCase())}</span></div>
+   <div class="muted">${escapeHTML(g.description)}</div>
+  </div>
+  <div class="row-actions">
+   ${g.status!=="approved"?`<button class="good" onclick="moderateGame('${g.id}','approved')">Approve</button>`:""}
+   ${g.status!=="blocked"?`<button class="secondary" onclick="moderateGame('${g.id}','blocked')">Block</button>`:`<button class="good" onclick="moderateGame('${g.id}','approved')">Unblock</button>`}
+   <button class="danger" onclick="moderateGame('${g.id}','delete')">Delete</button>
+  </div>
+ </div>`;
+}
+
+async function renderAdmin(existing) {
  if(!isAdmin())return;
- let gs=data.games;
- document.getElementById('statTotal').textContent=gs.length;
- document.getElementById('statPending').textContent=gs.filter(g=>g.status==='pending').length;
- document.getElementById('statBlocked').textContent=gs.filter(g=>g.status==='blocked').length;
- document.getElementById('statUsers').textContent=data.users.length;
- const pending=gs.filter(g=>g.status==='pending').sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
- const queue=document.getElementById('adminReviewQueue');
- queue.innerHTML=pending.length?pending.map(g=>`<div class="admin-row"><div><strong>${escapeHTML(g.emoji||'🎮')} ${escapeHTML(g.title)}</strong><div class="muted" style="font-size:12px">By ${escapeHTML(g.owner||'Unknown')} · ${escapeHTML(g.category||'Other')} · Submitted ${escapeHTML(g.createdAt||'date not recorded')}</div><div class="muted" style="font-size:12px">${escapeHTML(g.description||'No description')}</div></div><div class="admin-actions"><button class="good" onclick="moderate('${g.id}','approved')">Approve & publish</button><button class="secondary" onclick="moderate('${g.id}','blocked')">Block</button><button onclick="openEdit('${g.id}')">Review / edit</button></div></div>`).join(''):'<div class="empty">🎉 No games are waiting for review.</div>';
- let q=(document.getElementById('adminSearch')?.value||'').toLowerCase(),st=document.getElementById('adminStatus')?.value||'All';
- let filtered=gs.filter(g=>(st==='All'||g.status===st)&&(`${g.title} ${g.owner||''} ${g.category}`).toLowerCase().includes(q));
- let box=document.getElementById('adminGames');
- box.innerHTML=filtered.length?filtered.map(g=>`<div class="admin-row"><div><strong>${escapeHTML(g.emoji||'🎮')} ${escapeHTML(g.title)}</strong><div class="muted" style="font-size:12px">${escapeHTML(g.category||'Other')} · by ${escapeHTML(g.owner||'Unknown')} · <span class="status ${escapeHTML(g.status||'pending')}">${escapeHTML(String(g.status||'pending').toUpperCase())}</span>${g.featured?' · ⭐ Featured':''} · v${escapeHTML(g.version||'1.0')}${g.moderationNote?' · Note: '+escapeHTML(g.moderationNote):''}</div></div><div class="admin-actions"><button onclick="openEdit('${g.id}')">Edit</button>${g.status!=='approved'?`<button class="good" onclick="moderate('${g.id}','approved')">Publish</button>`:''}${g.status!=='blocked'?`<button class="secondary" onclick="moderate('${g.id}','blocked')">Block</button>`:`<button class="good" onclick="moderate('${g.id}','approved')">Unblock</button>`}<button class="secondary" onclick="moderate('${g.id}','feature')">${g.featured?'Unfeature':'Feature'}</button><button class="danger" onclick="moderate('${g.id}','delete')">Remove</button></div></div>`).join(''):'<div class="empty">No matching games.</div>';
- // Account overview includes each creator's actual game titles and statuses, not just a count.
- const owners=new Set([...data.users.map(u=>u.name),...gs.map(g=>g.owner||'Unknown')]);
- const usersBox=document.getElementById('adminUsers');
- const ownerList=[...owners].sort((a,b)=>String(a).localeCompare(String(b)));
- usersBox.innerHTML=ownerList.length?ownerList.map((name,i)=>{
-  const u=data.users.find(x=>x.name===name),owned=gs.filter(g=>g.owner===name);
-  const key='accountGames_'+i;
-  const details=owned.length?owned.map(g=>`<div class="admin-row"><div><strong>${escapeHTML(g.emoji||'🎮')} ${escapeHTML(g.title)}</strong><div class="muted" style="font-size:12px"><span class="status ${escapeHTML(g.status||'pending')}">${escapeHTML(String(g.status||'pending').toUpperCase())}</span> · ${escapeHTML(g.category||'Other')} · v${escapeHTML(g.version||'1.0')}</div></div><div class="admin-actions"><button onclick="moderate('${g.id}','approved')" ${g.status==='approved'?'disabled':''}>Publish</button><button onclick="openEdit('${g.id}')">Edit</button><button class="danger" onclick="moderate('${g.id}','delete')">Remove</button></div></div>`).join(''):'<div class="empty">No games submitted by this account yet.</div>';
-  return `<div class="admin-row"><div><strong>👤 ${escapeHTML(name)}</strong><div class="muted" style="font-size:12px">${u?(u.suspended?'⛔ Suspended account':'Active account'):'Creator name on submitted games'} · ${owned.length} game(s) · ${owned.filter(g=>g.status==='pending').length} pending · ${owned.filter(g=>g.status==='approved').length} published</div></div><div class="admin-actions">${u?`<button class="secondary" onclick="toggleUser('${encodeURIComponent(name)}')">${u.suspended?'Restore':'Suspend'}</button><button class="danger" onclick="removeUser('${encodeURIComponent(name)}')">Remove account</button>`:''}<button onclick="toggleAccountGames('${key}')">Show games</button></div><div id="${key}" class="hidden" style="width:100%;padding:8px 0 0 18px">${details}</div></div>`;
- }).join(''):'<div class="empty">No accounts or game submissions yet.</div>';
- const counts={};gs.forEach(g=>{const c=g.category||'Other';counts[c]=(counts[c]||0)+1});
- document.getElementById('categoryStats').innerHTML=Object.keys(counts).length?Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<div class="meta">${escapeHTML(c)}<strong>${n} game(s)</strong></div>`).join(''):'<div class="empty">No category data yet.</div>';
- const paused=!!(data.settings&&data.settings.submissionsPaused);
- document.getElementById('submissionState').textContent=paused?'⏸ Submissions are paused':'🟢 Submissions are open';
- document.getElementById('submissionToggle').textContent=paused?'Resume submissions':'Pause submissions';
- document.getElementById('announcementInput').value=data.announcement||'';document.getElementById('creatorDisplayNameInput').value=(data.settings&&data.settings.creatorDisplayName)||'Thomas';renderAdminReports();renderPlatformHealth();
- let settingsData=data.settings||{};
- document.getElementById('siteNameInput').value=settingsData.siteName||'Thomas Games';
- document.getElementById('accentInput').value=settingsData.accent||'#6c8cff';
- document.getElementById('heroTitleInput').value=settingsData.heroTitle||'';
- document.getElementById('heroSubtitleInput').value=settingsData.heroSubtitle||'';
- document.getElementById('featuredTitleInput').value=settingsData.featuredTitle||'';
- document.getElementById('footerInput').value=settingsData.footer||'';
- document.getElementById('maintenanceInput').value=settingsData.maintenance||'';
- let log=document.getElementById('adminActivity');
- log.innerHTML=(data.activity||[]).length?data.activity.map(a=>`<div class="admin-row"><div>${escapeHTML(a.message)}<div class="muted" style="font-size:11px">${escapeHTML(a.at)}</div></div></div>`).join(''):'<div class="empty">No admin actions yet.</div>';
+ let all=existing;
+ if(!all) {
+  const {data,error}=await db.from("games").select("*").order("created_at",{ascending:false});
+  if(error) { $("adminGames").textContent=error.message;return; }
+  all=data||[];
+  await addCreatorNames(all);
+ }
+ const q=($("adminSearch").value||"").toLowerCase();
+ const status=$("adminStatus").value;
+ const filtered=all.filter(g=>
+  (status==="All"||g.status===status)&&
+  `${g.title} ${g.description} ${g.creatorName||""}`.toLowerCase().includes(q)
+ );
+ $("adminGames").innerHTML=filtered.length?filtered.map(g=>adminRow(g)).join(""):'<div class="empty">No matching games.</div>';
 }
-function saveCreatorProfile(){if(!isAdmin())return;const n=document.getElementById('creatorDisplayNameInput').value.trim();if(!n){alert('Enter a creator display name.');return}const old=currentUser.name;if(!data.settings)data.settings={};data.settings.creatorDisplayName=n;data.games.forEach(g=>{if(g.owner===old||g.owner==='Creator')g.owner=n});if(!saveData()){alert('Could not save creator profile.');return}currentUser.name=n;logAdmin('Changed original creator display name to '+n);updateHeader();renderAdmin();renderGames();alert('Your public creator name has been updated.')}
-function reportGame(id){const g=data.games.find(x=>x.id===id);if(!g)return;const reason=prompt('Why are you reporting this game?');if(!reason||!reason.trim())return;if(!Array.isArray(data.reports))data.reports=[];data.reports.unshift({id:'r'+Date.now(),gameId:id,title:g.title,reason:reason.trim(),at:new Date().toLocaleString(),status:'open'});if(!saveData()){alert('Could not save this report in this browser.');return}alert('Report submitted. Thank you.');}
-function renderAdminReports(){const box=document.getElementById('adminReports');if(!box)return;const reports=Array.isArray(data.reports)?data.reports.filter(r=>r.status==='open'):[];box.innerHTML=reports.length?reports.map(r=>`<div class="admin-row"><div><strong>${escapeHTML(r.title)}</strong><div class="muted" style="font-size:12px">${escapeHTML(r.reason)} · ${escapeHTML(r.at)}</div></div><div class="admin-actions"><button class="good" onclick="resolveReport('${r.id}')">Dismiss</button><button class="danger" onclick="blockReportedGame('${r.id}')">Block game</button></div></div>`).join(''):'<div class="empty">No open reports.</div>'}
-function resolveReport(id){if(!isAdmin())return;const r=(data.reports||[]).find(x=>x.id===id);if(!r)return;r.status='resolved';saveData();logAdmin('Dismissed report for '+r.title);renderAdminReports()}
-function blockReportedGame(id){if(!isAdmin())return;const r=(data.reports||[]).find(x=>x.id===id);if(!r)return;const g=data.games.find(x=>x.id===r.gameId);if(g)g.status='blocked';r.status='resolved';saveData();logAdmin('Blocked reported game '+r.title);renderAdmin();renderGames()}
-function renderPlatformHealth(){const box=document.getElementById('platformHealth');if(!box)return;let size=0;try{size=new Blob([JSON.stringify(data)]).size}catch(e){}box.innerHTML=`<div class="meta">Storage estimate<strong>${(size/1024).toFixed(1)} KB</strong></div><div class="meta">Open reports<strong>${(data.reports||[]).filter(r=>r.status==='open').length}</strong></div><div class="meta">Published games<strong>${data.games.filter(g=>g.status==='approved').length}</strong></div><div class="meta">Pending updates<strong>${data.games.filter(g=>g.status==='pending'&&g.updatedAt&&g.createdAt!==g.updatedAt).length}</strong></div>`}
-function runPlatformAudit(){if(!isAdmin())return;const issues=[];if(!Array.isArray(data.games))issues.push('Game list is not an array');data.games.forEach(g=>{if(!g.title)issues.push('A game is missing a title');if(!safeUrl(g.url))issues.push('Invalid URL: '+(g.title||g.id));if(!['pending','approved','blocked'].includes(g.status))issues.push('Unknown status: '+(g.title||g.id))});const out=document.getElementById('platformAuditResult');out.textContent=issues.length?('Audit found '+issues.length+' issue(s): '+issues.slice(0,5).join(' · ')):'Local audit passed: game records, statuses and URLs look valid. This does not test external game hosting or server security.';logAdmin('Ran platform health audit');renderAdmin()}
-function downloadGameList(){if(!isAdmin())return;const rows=[['Title','Creator','Category','Status','Version','URL'],...data.games.map(g=>[g.title,g.owner,g.category,g.status,g.version,g.url])];const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='thomas-games-list.csv';a.click();URL.revokeObjectURL(a.href)}
-function toggleAccountGames(id){const el=document.getElementById(id);if(el)el.classList.toggle('hidden')}
-function toggleSubmissions(){if(!isAdmin())return;if(!data.settings)data.settings={};data.settings.submissionsPaused=!data.settings.submissionsPaused;if(!saveData()){data.settings.submissionsPaused=!data.settings.submissionsPaused;alert('Could not save platform settings.');return}logAdmin(data.settings.submissionsPaused?'Paused new game submissions':'Resumed new game submissions');renderAdmin();}
 
-function toggleUser(name){if(!isAdmin())return;name=decodeURIComponent(name);let u=data.users.find(x=>x.name===name);if(!u)return;u.suspended=!u.suspended;saveData();logAdmin((u.suspended?'Suspended ':'Restored ')+u.name);renderAdmin()}
-function removeUser(name){if(!isAdmin())return;name=decodeURIComponent(name);if(!confirm(`Remove account ${name}? Their games will remain listed under their creator name.`))return;data.users=data.users.filter(u=>u.name!==name);saveData();logAdmin('Removed account '+name);renderAdmin()}
-function saveAnnouncement(){if(!isAdmin())return;data.announcement=document.getElementById('announcementInput').value.trim();if(!saveData()){alert('Could not save the announcement. Check browser storage.');return}logAdmin('Changed the homepage announcement');renderGames();renderAdmin();alert('Announcement saved.')}
-function clearAnnouncement(){if(!isAdmin())return;data.announcement='';saveData();logAdmin('Cleared the homepage announcement');renderAdmin();renderGames()}
-function moderate(id,action){if(!isAdmin())return;const before=JSON.stringify(data);let g=data.games.find(x=>x.id===id);if(!g)return;if(action==='delete'){if(!confirm(`Permanently remove "${g.title}"?`))return;data.games=data.games.filter(x=>x.id!==id)}else if(action==='feature'){g.featured=!g.featured}else{if(action==='blocked'){const reason=prompt('Why are you blocking this game? (Optional)');if(reason===null)return;g.moderationNote=reason.trim()}g.status=action}if(!saveData()){data=JSON.parse(before);alert('Could not save this moderation change.');return}logAdmin(action==='delete'?'Removed game '+g.title:action==='feature'?(g.featured?'Featured ':'Unfeatured ')+g.title:(action==='blocked'?'Blocked ':'Published/unblocked ')+g.title);renderAdmin();renderGames()}
-function adminAction(action){if(!isAdmin())return;if(action==='import'){let inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=()=>{let f=inp.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let obj=JSON.parse(r.result);if(!Array.isArray(obj.games)||!Array.isArray(obj.users))throw Error();if(!confirm('Replace the current local data with this backup?'))return;data=obj;saveData();renderAdmin();renderGames();alert('Backup imported.')}catch(e){alert('That backup file is not valid.')}};r.readAsText(f)};inp.click();return}if(action==='approveAll')data.games.filter(g=>g.status==='pending').forEach(g=>g.status='approved');if(action==='unblockAll')data.games.filter(g=>g.status==='blocked').forEach(g=>g.status='approved');if(action==='deleteAll'){if(!confirm('Delete every game from this browser? This cannot be undone.'))return;data.games=[]}if(action==='featureAll')data.games.filter(g=>g.status==='approved').forEach(g=>g.featured=true);if(action==='unfeatureAll')data.games.forEach(g=>g.featured=false);if(action==='clearBlocked'){if(!confirm('Permanently delete all blocked games?'))return;data.games=data.games.filter(g=>g.status!=='blocked')}if(action==='export'){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='thomas-games-backup.json';a.click();URL.revokeObjectURL(a.href);return}saveData();logAdmin('Ran admin command: '+action);renderAdmin();renderGames()}
-updateHeader();applySiteSettings();renderGames();
+async function moderateGame(id,action) {
+ if(!isAdmin())return;
+ if(action==="delete"&&!confirm("Permanently delete this game?"))return;
+ const update=action==="delete"?null:{status:action};
+ const result=action==="delete"
+  ?await db.from("games").delete().eq("id",id)
+  :await db.from("games").update(update).eq("id",id);
+ if(result.error) {alert("Could not update game: "+result.error.message);return;}
+ await loadAdmin();
+ await loadGames();
+}
+
+async function start() {
+ const {data}=await db.auth.getSession();
+ currentUser=data.session?.user||null;
+ if(currentUser) await loadProfile();
+ updateHeader();
+ await loadGames();
+}
+start();
 </script>
-</body></html>
+</body>
+</html>
