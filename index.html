@@ -49,6 +49,9 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
 .modal{width:min(440px,100%);background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:22px}
 .modal h2{margin-top:0}.modal label{margin-top:13px}
 #player{width:100%;height:calc(100vh - 190px);min-height:400px;border:1px solid var(--line);border-radius:14px;background:#050914}
+.announcement{padding:14px 16px;margin:14px 0;border:1px solid #5269a0;border-radius:12px;background:linear-gradient(110deg,#1c3159,#182442)}
+.announcement strong{color:#9fe9ff}.admin-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.admin-tools button{min-height:44px}
 .footer{text-align:center;color:#7283a5;font-size:12px;margin-top:40px}
 @media(max-width:600px){.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.nav .brand{width:100%}#player{height:65vh}}
 </style>
@@ -74,13 +77,17 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
   <button onclick="document.getElementById('search').focus()">🎲 Browse games</button>
   <button class="secondary" onclick="showPage('publish')">＋ Publish your game</button>
  </div>
+ <div id="announcementBanner"></div>
  <div class="toolbar">
   <input id="search" placeholder="🔎 Search games..." oninput="renderGames()">
   <select id="category" style="max-width:190px" onchange="renderGames()">
    <option>All</option><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option>
   </select>
  </div>
- <div class="section-head"><h2>⭐ Games to play</h2><span class="muted" id="gameCount"></span></div>
+ <div class="section-head"><h2>🔥 Most popular</h2><span class="muted">Ranked by community votes</span></div>
+ <div class="grid" id="popularGrid"><div class="empty">Loading popular games...</div></div>
+ <div class="section-head"><h2>⭐ All games</h2><span class="muted" id="gameCount"></span></div>
+ <div class="toolbar"><label for="sortGames">Sort games</label><select id="sortGames" onchange="renderGames()" style="max-width:210px"><option value="featured">Featured first</option><option value="popular">Most popular</option><option value="likes">Most likes</option><option value="newest">Newest</option></select></div>
  <div class="grid" id="gamesGrid"><div class="empty">Loading games...</div></div>
 </section>
 
@@ -113,6 +120,24 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
 <section id="adminPage" class="hidden">
  <div class="section-head"><h2>👑 Creator control centre</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
  <div class="notice">Only the account you have given admin access can use these controls.</div>
+ <div class="panel"><h3>⚡ Quick commands</h3>
+  <p class="muted">Fast tools for managing the platform.</p>
+  <div class="admin-tools">
+   <button onclick="loadAdmin()">🔄 Refresh dashboard</button>
+   <button class="good" onclick="approveAllPending()">✅ Approve all pending</button>
+   <button class="secondary" onclick="unfeatureAll()">⭐ Remove all featured</button>
+   <button class="secondary" onclick="exportGamesCSV()">📥 Export games CSV</button>
+   <button class="secondary" onclick="showPage('home')">🏠 View public site</button>
+  </div>
+ </div>
+ <div class="panel"><h3>📣 Announcements</h3>
+  <p class="muted">Post a message that appears at the top of the Explore page.</p>
+  <label>Announcement title</label><input id="announcementTitle" maxlength="70" placeholder="Example: New games are here!">
+  <label>Message</label><textarea id="announcementBody" maxlength="500" placeholder="Write an update for everyone..."></textarea>
+  <div class="actions"><button class="good" onclick="publishAnnouncement()">📢 Publish announcement</button><button class="secondary" onclick="clearAnnouncementForm()">Clear</button></div>
+  <div id="announcementAdminList" style="margin-top:15px">Loading announcements...</div>
+ </div>
+ <div class="panel"><h3>📊 Platform statistics</h3><div class="grid" id="adminStats"><div class="notice">Loading statistics...</div></div></div>
  <div class="panel"><h3>Review queue</h3><div id="reviewQueue">Loading...</div></div>
  <div class="panel">
   <h3>All games</h3>
@@ -126,7 +151,7 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
 
 <section id="playPage" class="hidden">
  <div class="section-head"><h2 id="playerTitle">🎮 Now playing</h2><div class="actions"><button class="secondary" onclick="toggleFullscreen()">⛶ Fullscreen</button><button class="secondary" onclick="showPage('home')">✕ Close</button></div></div>
- <iframe id="player" title="Game player" sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads allow-presentation" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
+ <iframe id="player" title="Game player" sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads allow-presentation allow-same-origin" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
  <p class="muted" id="playerMessage"></p>
 </section>
 
@@ -159,6 +184,8 @@ let currentUser = null;
 let currentProfile = null;
 let authMode = "login";
 let games = [];
+let gameVotes = [];
+let myGameVotes = {};
 
 const $ = id => document.getElementById(id);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -272,7 +299,9 @@ async function loadGames() {
  }
  games=data||[];
  await addCreatorNames(games);
+ await loadGameVotes();
  renderGames();
+ await loadPublicAnnouncements();
 }
 
 async function addCreatorNames(list) {
@@ -284,14 +313,57 @@ async function addCreatorNames(list) {
  list.forEach(g=>g.creatorName=names[g.owner_id]||"Player");
 }
 
+function cleanStoragePath(path) {
+ let value=String(path || "").trim().replace(/^\/+/, "");
+ value=value.replace(/^game-files\//, "");
+ const marker="/storage/v1/object/public/game-files/";
+ const at=value.indexOf(marker);
+ if(at>=0) value=value.slice(at+marker.length);
+ return value;
+}
+function storagePublicUrl(path) {
+ const clean=cleanStoragePath(path);
+ if(!clean) return "";
+ return db.storage.from("game-files").getPublicUrl(clean).data?.publicUrl || "";
+}
+function usableGameUrl(game) {
+ const fromPath=storagePublicUrl(game.game_file_path);
+ return fromPath || String(game.game_url||"").trim();
+}
 function coverHTML(game) {
- if(game.cover_path) {
-  const {data}=db.storage.from("game-files").getPublicUrl(game.cover_path);
-  return `<div class="cover"><img src="${escapeHTML(data.publicUrl)}" alt="Game cover"></div>`;
- }
+ const url=storagePublicUrl(game.cover_path);
+ if(url) return `<div class="cover"><img src="${escapeHTML(url)}" alt="Game cover" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML='🎮'"></div>`;
  return `<div class="cover">${escapeHTML(game.emoji||"🎮")}</div>`;
 }
 
+function voteTotals(gameId) {
+ const rows=gameVotes.filter(v=>v.game_id===gameId);
+ return {likes:rows.filter(v=>v.vote===1).length,dislikes:rows.filter(v=>v.vote===-1).length};
+}
+function gamePopularity(game) {
+ const t=voteTotals(game.id);
+ return t.likes-t.dislikes;
+}
+function gameCard(g) {
+ const totals=voteTotals(g.id), mine=myGameVotes[g.id]||0;
+ return `<article class="game">
+  ${coverHTML(g)}
+  <div class="game-body">
+   <div><span class="tag">${escapeHTML(g.category)}</span>${g.featured?'<span class="tag">⭐ Featured</span>':""}</div>
+   <h3>${escapeHTML(g.title)}</h3>
+   <p>${escapeHTML(g.description)}</p>
+   <p>👤 ${escapeHTML(g.creatorName||"Player")}</p>
+   <div class="game-actions">
+    <button onclick="playGame('${g.id}')">▶ Play</button>
+    <button class="secondary" onclick="showDetails('${g.id}')">Details</button>
+   </div>
+   <div class="game-actions vote-actions">
+    <button class="${mine===1?'good':'secondary'}" onclick="voteGame('${g.id}',1)">👍 ${totals.likes}</button>
+    <button class="${mine===-1?'danger':'secondary'}" onclick="voteGame('${g.id}',-1)">👎 ${totals.dislikes}</button>
+   </div>
+  </div>
+ </article>`;
+}
 function renderGames() {
  const q=($("search").value||"").toLowerCase();
  const category=$("category").value;
@@ -299,22 +371,37 @@ function renderGames() {
   (category==="All"||g.category===category) &&
   `${g.title} ${g.description} ${g.category} ${g.creatorName||""}`.toLowerCase().includes(q)
  );
- filtered.sort((a,b)=>Number(b.featured)-Number(a.featured));
+ const sort=$("sortGames")?.value||"featured";
+ filtered.sort((a,b)=>{
+  if(sort==="popular"||sort==="likes") {
+   const ta=voteTotals(a.id),tb=voteTotals(b.id);
+   const scoreA=sort==="likes"?ta.likes:ta.likes-ta.dislikes;
+   const scoreB=sort==="likes"?tb.likes:tb.likes-tb.dislikes;
+   return scoreB-scoreA || Number(b.featured)-Number(a.featured);
+  }
+  if(sort==="newest") return new Date(b.created_at)-new Date(a.created_at);
+  return Number(b.featured)-Number(a.featured);
+ });
  $("gameCount").textContent=filtered.length+" games";
- $("gamesGrid").innerHTML=filtered.length?filtered.map(g=>`
-  <article class="game">
-   ${coverHTML(g)}
-   <div class="game-body">
-    <div><span class="tag">${escapeHTML(g.category)}</span>${g.featured?'<span class="tag">⭐ Featured</span>':""}</div>
-    <h3>${escapeHTML(g.title)}</h3>
-    <p>${escapeHTML(g.description)}</p>
-    <p>👤 ${escapeHTML(g.creatorName||"Player")}</p>
-    <div class="game-actions">
-     <button onclick="playGame('${g.id}')">▶ Play</button>
-     <button class="secondary" onclick="showDetails('${g.id}')">Details</button>
-    </div>
-   </div>
-  </article>`).join(""):'<div class="empty" style="grid-column:1/-1">No games found yet. Try another search!</div>';
+ $("gamesGrid").innerHTML=filtered.length?filtered.map(gameCard).join(""):'<div class="empty" style="grid-column:1/-1">No games found yet. Try another search!</div>';
+ const popular=[...games].sort((a,b)=>gamePopularity(b)-gamePopularity(a)||voteTotals(b.id).likes-voteTotals(a.id).likes).slice(0,6);
+ $("popularGrid").innerHTML=popular.length?popular.map(gameCard).join(""):'<div class="empty" style="grid-column:1/-1">No games yet.</div>';
+}
+async function loadGameVotes() {
+ const {data,error}=await db.from("game_votes").select("game_id,user_id,vote");
+ if(error) {console.warn("Game voting table is not set up yet:",error.message);gameVotes=[];myGameVotes={};return;}
+ gameVotes=data||[];
+ myGameVotes={};
+ if(currentUser) gameVotes.forEach(v=>{if(v.user_id===currentUser.id)myGameVotes[v.game_id]=v.vote;});
+}
+async function voteGame(gameId,value) {
+ if(!currentUser) {alert("Please sign in to like or dislike games.");openAuth();return;}
+ const existing=myGameVotes[gameId]||0;
+ const result=existing===value
+  ? await db.from("game_votes").delete().eq("game_id",gameId).eq("user_id",currentUser.id)
+  : await db.from("game_votes").upsert({game_id:gameId,user_id:currentUser.id,vote:value},{onConflict:"game_id,user_id"});
+ if(result.error){alert("Could not save your vote: "+result.error.message);return;}
+ await loadGameVotes();renderGames();
 }
 
 function showDetails(id) {
@@ -326,13 +413,12 @@ function showDetails(id) {
 function playGame(id) {
  const g=games.find(x=>x.id===id);
  if(!g)return;
- let url=g.game_url;
- if(g.game_file_path) {
-  url=db.storage.from("game-files").getPublicUrl(g.game_file_path).data.publicUrl;
- }
+ // Prefer the uploaded HTML file, then fall back to the saved URL.
+ let url=usableGameUrl(g);
  if(!url) {alert("This game does not have a playable file or URL.");return;}
  $("playerTitle").textContent="🎮 "+g.title;
  $("playerMessage").textContent="Playing "+g.title;
+ $("player").src="about:blank";
  $("player").src=url;
  showPage("play");
 }
@@ -446,7 +532,16 @@ async function loadAdmin() {
  }
  const all=data||[];
  await addCreatorNames(all);
+ await loadAdminAnnouncements();
  const pending=all.filter(g=>g.status==="pending");
+ const approved=all.filter(g=>g.status==="approved");
+ const blocked=all.filter(g=>g.status==="blocked");
+ const featured=all.filter(g=>g.featured);
+ $("adminStats").innerHTML=[
+  ["🎮 Total games",all.length],["⏳ Pending",pending.length],
+  ["✅ Approved",approved.length],["🚫 Blocked",blocked.length],
+  ["⭐ Featured",featured.length]
+ ].map(([label,value])=>`<div class="panel"><strong>${label}</strong><div style="font-size:30px;font-weight:900;margin-top:8px">${value}</div></div>`).join("");
  $("reviewQueue").innerHTML=pending.length?pending.map(g=>adminRow(g,true)).join(""):'<div class="empty">🎉 No games waiting for review.</div>';
  renderAdmin(all);
 }
@@ -460,6 +555,7 @@ function adminRow(g,review=false) {
   <div class="row-actions">
    ${g.status!=="approved"?`<button class="good" onclick="moderateGame('${g.id}','approved')">Approve</button>`:""}
    ${g.status!=="blocked"?`<button class="secondary" onclick="moderateGame('${g.id}','blocked')">Block</button>`:`<button class="good" onclick="moderateGame('${g.id}','approved')">Unblock</button>`}
+   <button class="secondary" onclick="toggleFeatured('${g.id}',${!g.featured})">${g.featured?"⭐ Unfeature":"☆ Feature"}</button>
    <button class="danger" onclick="moderateGame('${g.id}','delete')">Delete</button>
   </div>
  </div>`;
@@ -483,6 +579,14 @@ async function renderAdmin(existing) {
  $("adminGames").innerHTML=filtered.length?filtered.map(g=>adminRow(g)).join(""):'<div class="empty">No matching games.</div>';
 }
 
+async function toggleFeatured(id,featured) {
+ if(!isAdmin()) return;
+ const {error}=await db.from("games").update({featured}).eq("id",id);
+ if(error) {alert("Could not change featured status: "+error.message);return;}
+ await loadAdmin();
+ await loadGames();
+}
+
 async function moderateGame(id,action) {
  if(!isAdmin())return;
  if(action==="delete"&&!confirm("Permanently delete this game?"))return;
@@ -493,6 +597,66 @@ async function moderateGame(id,action) {
  if(result.error) {alert("Could not update game: "+result.error.message);return;}
  await loadAdmin();
  await loadGames();
+}
+
+
+async function loadPublicAnnouncements() {
+ const box=$("announcementBanner");
+ if(!box) return;
+ const {data,error}=await db.from("announcements").select("id,title,message,created_at").eq("active",true).order("created_at",{ascending:false}).limit(1);
+ if(error) {console.warn("Announcements are not set up yet:",error.message);box.innerHTML="";return;}
+ const a=data?.[0];
+ box.innerHTML=a?`<div class="announcement"><strong>📣 ${escapeHTML(a.title)}</strong><div>${escapeHTML(a.message)}</div></div>`:"";
+}
+async function loadAdminAnnouncements() {
+ const box=$("announcementAdminList");
+ if(!box) return;
+ const {data,error}=await db.from("announcements").select("id,title,message,active,created_at").order("created_at",{ascending:false}).limit(20);
+ if(error) {box.innerHTML='<div class="notice">Announcements need the one-time SQL setup in the setup file.</div>';return;}
+ box.innerHTML=data?.length?data.map(a=>`<div class="row"><div><strong>${escapeHTML(a.title)}</strong><div class="muted">${escapeHTML(a.message)}</div><span class="tag">${a.active?"ACTIVE":"HIDDEN"}</span></div><div class="row-actions"><button class="secondary" onclick="toggleAnnouncement('${a.id}',${!a.active})">${a.active?"Hide":"Show"}</button><button class="danger" onclick="deleteAnnouncement('${a.id}')">Delete</button></div></div>`).join(""):'<div class="empty">No announcements yet.</div>';
+}
+async function publishAnnouncement() {
+ if(!isAdmin()) return;
+ const title=$("announcementTitle").value.trim(),message=$("announcementBody").value.trim();
+ if(!title||!message){alert("Please enter both a title and a message.");return;}
+ const {error}=await db.from("announcements").insert({title,message,active:true,created_by:currentUser.id});
+ if(error){alert("Could not publish announcement: "+error.message+" Check the SQL setup file.");return;}
+ clearAnnouncementForm();await loadAdminAnnouncements();await loadPublicAnnouncements();
+}
+function clearAnnouncementForm(){$("announcementTitle").value="";$("announcementBody").value="";}
+async function toggleAnnouncement(id,active){
+ if(!isAdmin())return;
+ const {error}=await db.from("announcements").update({active}).eq("id",id);
+ if(error){alert(error.message);return;}
+ await loadAdminAnnouncements();await loadPublicAnnouncements();
+}
+async function deleteAnnouncement(id){
+ if(!isAdmin()||!confirm("Delete this announcement?"))return;
+ const {error}=await db.from("announcements").delete().eq("id",id);
+ if(error){alert(error.message);return;}
+ await loadAdminAnnouncements();await loadPublicAnnouncements();
+}
+async function approveAllPending(){
+ if(!isAdmin()||!confirm("Approve every game currently waiting for review?"))return;
+ const {error}=await db.from("games").update({status:"approved"}).eq("status","pending");
+ if(error){alert("Could not approve games: "+error.message);return;}
+ await loadAdmin();await loadGames();
+}
+async function unfeatureAll(){
+ if(!isAdmin()||!confirm("Remove featured status from every game?"))return;
+ const {error}=await db.from("games").update({featured:false}).eq("featured",true);
+ if(error){alert("Could not update games: "+error.message);return;}
+ await loadAdmin();await loadGames();
+}
+async function exportGamesCSV(){
+ if(!isAdmin())return;
+ const {data,error}=await db.from("games").select("id,title,description,category,status,featured,owner_id,game_url,game_file_path,cover_path,created_at").order("created_at",{ascending:false});
+ if(error){alert("Export failed: "+error.message);return;}
+ const cols=["id","title","description","category","status","featured","owner_id","game_url","game_file_path","cover_path","created_at"];
+ const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const csv=[cols.join(","),...(data||[]).map(row=>cols.map(c=>quote(row[c])).join(","))].join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="thomas-games-export.csv";a.click();URL.revokeObjectURL(url);
 }
 
 async function start() {
