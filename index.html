@@ -63,6 +63,7 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
   <button class="secondary" onclick="showPage('home')">Explore</button>
   <button class="secondary" onclick="showPage('publish')">Publish a game</button>
   <button class="secondary hidden" id="myGamesButton" onclick="showPage('mine')">My games</button>
+  <button class="secondary hidden" id="profileButton" onclick="showPage('profile')">👤 Profile</button>
   <button class="secondary hidden" id="adminButton" onclick="showPage('admin')">⚙ Admin</button>
   <span class="muted" id="userLabel"></span>
   <button id="authButton" onclick="openAuth()">Sign in</button>
@@ -117,6 +118,23 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
  <div class="panel" id="myGamesList">Loading...</div>
 </section>
 
+<section id="profilePage" class="hidden">
+ <div class="section-head"><h2>👤 Your profile</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
+ <div class="panel">
+  <h3>Change your username</h3>
+  <p class="muted">Your username is shown beside games you publish. Use 3–20 letters, numbers or underscores.</p>
+  <label for="newUsername">Username</label>
+  <input id="newUsername" maxlength="20" minlength="3" autocomplete="username" placeholder="Your new username">
+  <div class="actions" style="margin-top:12px"><button onclick="saveUsername()">💾 Save username</button></div>
+  <p id="profileMessage" role="status" class="muted"></p>
+ </div>
+ <div class="panel">
+  <h3>Account details</h3>
+  <p id="profileEmail" class="muted"></p>
+  <p id="profileRole" class="muted"></p>
+ </div>
+</section>
+
 <section id="adminPage" class="hidden">
  <div class="section-head"><h2>👑 Creator control centre</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
  <div class="notice">Only the account you have given admin access can use these controls.</div>
@@ -127,6 +145,9 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
    <button class="good" onclick="approveAllPending()">✅ Approve all pending</button>
    <button class="secondary" onclick="unfeatureAll()">⭐ Remove all featured</button>
    <button class="secondary" onclick="exportGamesCSV()">📥 Export games CSV</button>
+   <button class="secondary" onclick="blockAllPending()">🚫 Block all pending</button>
+   <button class="secondary" onclick="deleteBlockedGames()">🗑 Delete all blocked</button>
+   <button class="secondary" onclick="featureMostLiked()">🏆 Feature most liked</button>
    <button class="secondary" onclick="showPage('home')">🏠 View public site</button>
   </div>
  </div>
@@ -193,9 +214,10 @@ const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
 })[c]);
 
 function showPage(page) {
- ["home","publish","mine","admin","play"].forEach(p => $(p+"Page").classList.toggle("hidden",p!==page));
+ ["home","publish","mine","profile","admin","play"].forEach(p => $(p+"Page").classList.toggle("hidden",p!==page));
  if(page==="home") renderGames();
  if(page==="mine") loadMyGames();
+ if(page==="profile") loadProfilePage();
  if(page==="admin") loadAdmin();
  if(page==="publish" && !currentUser) openAuth();
  if(page==="play") {}
@@ -230,6 +252,7 @@ function updateHeader() {
  $("authButton").textContent=currentUser?"Sign out":"Sign in";
  $("authButton").onclick=currentUser?signOut:openAuth;
  $("myGamesButton").classList.toggle("hidden",!currentUser);
+ $("profileButton").classList.toggle("hidden",!currentUser);
  $("adminButton").classList.toggle("hidden",!admin);
 }
 
@@ -520,6 +543,28 @@ async function deleteOwnGame(id) {
  loadMyGames();loadGames();
 }
 
+
+async function loadProfilePage() {
+ if(!currentUser){showPage("home");openAuth();return;}
+ await loadProfile();
+ $("newUsername").value=currentProfile?.username||"";
+ $("profileEmail").textContent="Email: "+currentUser.email;
+ $("profileRole").textContent="Account type: "+(isAdmin()?"Administrator":"Player");
+ $("profileMessage").textContent="";
+}
+async function saveUsername() {
+ if(!currentUser){openAuth();return;}
+ const username=$("newUsername").value.trim();
+ if(!/^[A-Za-z0-9_]{3,20}$/.test(username)){
+  $("profileMessage").textContent="Use 3–20 letters, numbers or underscores.";
+  return;
+ }
+ const {error}=await db.rpc("update_my_username",{new_username:username});
+ if(error){$("profileMessage").textContent="Couldn't save: "+error.message+" (The username SQL setup may still be needed.)";return;}
+ await loadProfile();updateHeader();
+ $("profileMessage").textContent="✅ Username updated!";
+}
+
 function isAdmin() {return currentProfile?.role==="admin";}
 
 async function loadAdmin() {
@@ -657,6 +702,38 @@ async function exportGamesCSV(){
  const csv=[cols.join(","),...(data||[]).map(row=>cols.map(c=>quote(row[c])).join(","))].join("\r\n");
  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
  a.href=url;a.download="thomas-games-export.csv";a.click();URL.revokeObjectURL(url);
+}
+
+
+async function blockAllPending(){
+ if(!isAdmin()||!confirm("Block every pending game?"))return;
+ const {error}=await db.from("games").update({status:"blocked"}).eq("status","pending");
+ if(error){alert("Could not block pending games: "+error.message);return;}
+ await loadAdmin();await loadGames();
+}
+async function deleteBlockedGames(){
+ if(!isAdmin()||!confirm("Permanently delete ALL blocked games? This cannot be undone."))return;
+ const {error}=await db.from("games").delete().eq("status","blocked");
+ if(error){alert("Could not delete blocked games: "+error.message);return;}
+ await loadAdmin();await loadGames();
+}
+async function featureMostLiked(){
+ if(!isAdmin())return;
+ const [{data:voteRows,error:voteError},{data:approvedRows,error:gamesError}]=await Promise.all([
+  db.from("game_votes").select("game_id,vote"),
+  db.from("games").select("id").eq("status","approved")
+ ]);
+ if(voteError){alert("Could not load votes: "+voteError.message);return;}
+ if(gamesError){alert("Could not load approved games: "+gamesError.message);return;}
+ const approvedIds=new Set((approvedRows||[]).map(g=>g.id));
+ const totals={};
+ (voteRows||[]).filter(v=>approvedIds.has(v.game_id)).forEach(v=>{totals[v.game_id]??={likes:0,score:0};if(v.vote===1)totals[v.game_id].likes++;totals[v.game_id].score+=v.vote;});
+ const winner=Object.entries(totals).sort((a,b)=>b[1].likes-a[1].likes||b[1].score-a[1].score)[0];
+ if(!winner){alert("There are no votes on approved games yet.");return;}
+ const {error:featureError}=await db.from("games").update({featured:true}).eq("id",winner[0]).eq("status","approved");
+ if(featureError){alert("Could not feature game: "+featureError.message);return;}
+ await loadAdmin();await loadGames();
+ alert("The most-liked game has been featured!");
 }
 
 async function start() {
