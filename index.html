@@ -462,7 +462,26 @@ function toggleFullscreen() {
  else frame.requestFullscreen?.();
 }
 
-async function uploadFile(file,path,contentType) {
+async function uploadFile(file, path, contentType) {
+  // Explicitly set the file's MIME type before uploading.
+  const uploadBody = contentType
+    ? new Blob([file], { type: contentType })
+    : file;
+
+  const { error } = await db.storage
+    .from("game-files")
+    .upload(path, uploadBody, {
+      upsert: false,
+      contentType: contentType || file.type || "application/octet-stream",
+      cacheControl: "3600"
+    });
+
+  if (error) throw error;
+  return path;
+}
+
+
+async function uploadFileOLD(file,path,contentType) {
  const {error}=await db.storage.from("game-files").upload(path,file,{upsert:false,contentType});
  if(error) throw error;
  return path;
