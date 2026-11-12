@@ -444,7 +444,58 @@ function showDetails(id) {
  alert(g.title+"\n\n"+g.description+"\n\nCategory: "+g.category+"\nCreator: "+(g.creatorName||"Player"));
 }
 
-function playGame(id) {
+async function playGame(id) {
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+
+  const url = usableGameUrl(g);
+  if (!url) {
+    alert("This game does not have a playable file or URL.");
+    return;
+  }
+
+  $("playerTitle").textContent = "🎮 " + g.title;
+  $("playerMessage").textContent = "Loading " + g.title + "...";
+  showPage("play");
+
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+
+    if (!response.ok) {
+      throw new Error("Could not download game: HTTP " + response.status);
+    }
+
+    let html = await response.text();
+
+    // Set a base URL so relative images and resources can resolve.
+    const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
+    const baseTag = `<base href="${baseUrl}">`;
+
+    if (/<head[^>]*>/i.test(html)) {
+      html = html.replace(/<head[^>]*>/i, match => match + baseTag);
+    } else {
+      html = baseTag + html;
+    }
+
+    const blob = new Blob([html], { type: "text/html" });
+    const blobUrl = URL.createObjectURL(blob);
+
+    if (window.currentGameBlobUrl) {
+      URL.revokeObjectURL(window.currentGameBlobUrl);
+    }
+
+    window.currentGameBlobUrl = blobUrl;
+    $("player").src = blobUrl;
+    $("playerMessage").textContent = "Playing " + g.title;
+
+  } catch (error) {
+    console.error("Game loading error:", error);
+    $("playerMessage").textContent =
+      "Could not load this game: " + error.message;
+  }
+}
+
+function playGameold(id) {
  const g=games.find(x=>x.id===id);
  if(!g)return;
  // Prefer the uploaded HTML file, then fall back to the saved URL.
