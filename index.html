@@ -337,11 +337,22 @@ async function addCreatorNames(list) {
 }
 
 function cleanStoragePath(path) {
- let value=String(path || "").trim().replace(/^\/+/, "");
- value=value.replace(/^game-files\//, "");
- const marker="/storage/v1/object/public/game-files/";
- const at=value.indexOf(marker);
- if(at>=0) value=value.slice(at+marker.length);
+ let value=String(path || "").trim();
+ if(!value) return "";
+ // Accept signed, public, and authenticated Supabase Storage URLs.
+ // Ignore query strings such as the signed-URL token when extracting the object path.
+ if(/^https?:\/\//i.test(value)) {
+  try {
+   const url=new URL(value);
+   const match=url.pathname.match(/\/storage\/v1\/object\/(?:sign|public|authenticated)\/game-files\/(.+)$/i);
+   if(match) return decodeURIComponent(match[1]).replace(/^\/+/, "");
+  } catch(error) {
+   console.warn("Could not parse Supabase Storage URL:", error);
+  }
+  return value;
+ }
+ value=value.replace(/^\/+/, "");
+ value=value.replace(/^game-files\//i, "");
  return value;
 }
 function storagePublicUrl(path) {
