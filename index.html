@@ -1,854 +1,468 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thomas Games</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--bg:#0b1020;--panel:#141d33;--panel2:#1b2945;--text:#f4f7ff;--muted:#9eacc8;--blue:#6c8cff;--cyan:#4de1d2;--line:#2b3a5b;--green:#42d392;--red:#ff687d}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(circle at 20% 0%,#1b2d56 0,transparent 35%),var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
-header{position:sticky;top:0;z-index:5;background:#0b1020ee;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}
-.nav{max-width:1200px;margin:auto;padding:14px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.brand{font-size:24px;font-weight:900;margin-right:auto}.brand span{color:var(--cyan)}
-button{border:0;border-radius:10px;padding:10px 14px;font-weight:750;cursor:pointer;color:white;background:var(--blue)}
-button:hover{filter:brightness(1.12)}button.secondary{background:#273653}button.good{background:#167c61}button.danger{background:#9e304b}
-button:disabled{opacity:.5;cursor:not-allowed}
-main{max-width:1200px;margin:auto;padding:25px 20px 60px}
-.hero{padding:38px 28px;border:1px solid #33476d;border-radius:22px;background:linear-gradient(115deg,#1d3260,#182344 60%,#26315d)}
-h1{font-size:clamp(32px,6vw,54px);margin:0 0 10px}
-.hero p{color:#d2dcf5;max-width:650px;line-height:1.6}
-.toolbar,.section-head,.actions,.tabs{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.toolbar{margin:24px 0 16px}.toolbar input{flex:1;min-width:200px}
-.section-head{justify-content:space-between;margin:25px 0 14px}
-.section-head h2{margin:0}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}
-.game{background:linear-gradient(160deg,#1a2947,#121b30);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-.cover{height:135px;background:linear-gradient(135deg,#263e70,#243051);display:grid;place-items:center;font-size:55px;overflow:hidden}
-.cover img{width:100%;height:100%;object-fit:cover}
-.game-body{padding:14px;display:flex;flex-direction:column;gap:9px;flex:1}
-.game h3{margin:0;font-size:19px}.game p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-.game-actions{display:flex;gap:8px;margin-top:auto}.game-actions button{flex:1}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin:18px 0}
-input,textarea,select{width:100%;padding:12px;border-radius:9px;border:1px solid var(--line);background:#0e172b;color:white;font:inherit}
-textarea{min-height:90px;resize:vertical}
-label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.wide{grid-column:1/-1}
-.muted{color:var(--muted)}.notice{padding:12px 14px;border-radius:10px;background:#1a3550;color:#d6edff;margin:12px 0}
-.hidden{display:none!important}
-.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
-.tag{display:inline-block;padding:4px 8px;border-radius:20px;background:#263653;color:#c8d7f7;font-size:11px;margin-right:5px}
-.status{font-weight:800;font-size:12px}.pending{color:#ffd27a}.approved{color:var(--green)}.blocked{color:#ff8a9b}
-.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 0;border-bottom:1px solid var(--line)}
-.row:last-child{border:0}.row-actions{display:flex;gap:6px;flex-wrap:wrap}
-.row-actions button{font-size:12px;padding:8px 10px}
-.modal-back{position:fixed;inset:0;background:#020611d9;z-index:20;display:grid;place-items:center;padding:15px}
-.modal{width:min(440px,100%);background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:22px}
-.modal h2{margin-top:0}.modal label{margin-top:13px}
-#player{width:100%;height:calc(100vh - 190px);min-height:400px;border:1px solid var(--line);border-radius:14px;background:#050914}
-.announcement{padding:14px 16px;margin:14px 0;border:1px solid #5269a0;border-radius:12px;background:linear-gradient(110deg,#1c3159,#182442)}
-.announcement strong{color:#9fe9ff}.admin-tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
-.admin-tools button{min-height:44px}
-.footer{text-align:center;color:#7283a5;font-size:12px;margin-top:40px}
-@media(max-width:600px){.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.nav .brand{width:100%}#player{height:65vh}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thomas Games</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0d1024;
+      color: #ffffff;
+    }
+
+    header {
+      padding: 28px 20px;
+      text-align: center;
+      background: #151a38;
+      border-bottom: 1px solid #2b3157;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 36px;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: #a9b1d6;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .section {
+      background: #171b34;
+      border: 1px solid #2b3157;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 18px;
+    }
+
+    .game-card {
+      background: #10142a;
+      border: 1px solid #333a63;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .game-emoji {
+      font-size: 44px;
+      margin-bottom: 10px;
+    }
+
+    .game-title {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .game-description {
+      margin: 0 0 14px;
+      color: #a9b1d6;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .game-category {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #232a4d;
+      color: #b9c2ff;
+      font-size: 12px;
+    }
+
+    .play-button {
+      display: inline-block;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: #5b7cfa;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .play-button:hover {
+      background: #4a69e0;
+    }
+
+    label {
+      display: block;
+      margin: 16px 0 7px;
+      font-weight: bold;
+      color: #d7dcff;
+      font-size: 14px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #333a63;
+      background: #10142a;
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #6c8cff;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #5b7cfa;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #4a69e0;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      display: none;
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .status.success {
+      display: block;
+      background: rgba(38, 166, 91, 0.18);
+      border: 1px solid #2ea361;
+      color: #7ee2a8;
+    }
+
+    .status.error {
+      display: block;
+      background: rgba(231, 76, 60, 0.15);
+      border: 1px solid #e74c3c;
+      color: #ff9d94;
+    }
+
+    .review-box {
+      display: none;
+      margin-top: 20px;
+      padding: 18px;
+      background: #10142a;
+      border: 1px solid #333a63;
+      border-radius: 12px;
+    }
+
+    .review-emoji {
+      font-size: 42px;
+    }
+
+    .review-url {
+      margin-top: 10px;
+      color: #8f9ad0;
+      font-size: 12px;
+      word-break: break-all;
+    }
+
+    .empty {
+      color: #a9b1d6;
+      text-align: center;
+      padding: 30px;
+    }
+
+    @media (max-width: 600px) {
+      main {
+        padding: 14px;
+      }
+
+      .section {
+        padding: 18px;
+      }
+
+      header h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<header>
- <div class="nav">
-  <div class="brand">🎮 Thomas <span>Games</span></div>
-  <button class="secondary" onclick="showPage('home')">Explore</button>
-  <button class="secondary" onclick="showPage('publish')">Publish a game</button>
-  <button class="secondary hidden" id="myGamesButton" onclick="showPage('mine')">My games</button>
-  <button class="secondary hidden" id="profileButton" onclick="showPage('profile')">👤 Profile</button>
-  <button class="secondary hidden" id="adminButton" onclick="showPage('admin')">⚙ Admin</button>
-  <span class="muted" id="userLabel"></span>
-  <button id="authButton" onclick="openAuth()">Sign in</button>
- </div>
-</header>
+  <header>
+    <h1>🎮 Thomas Games</h1>
+    <p>Play community games and upload your own.</p>
+  </header>
 
-<main>
-<section id="homePage">
- <div class="hero">
-  <h1>Play something awesome.</h1>
-  <p>Discover fun browser games, try something new, and share games you create with the Thomas Games community!</p>
-  <button onclick="document.getElementById('search').focus()">🎲 Browse games</button>
-  <button class="secondary" onclick="showPage('publish')">＋ Publish your game</button>
- </div>
- <div id="announcementBanner"></div>
- <div class="toolbar">
-  <input id="search" placeholder="🔎 Search games..." oninput="renderGames()">
-  <select id="category" style="max-width:190px" onchange="renderGames()">
-   <option>All</option><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option>
-  </select>
- </div>
- <div class="section-head"><h2>🔥 Most popular</h2><span class="muted">Ranked by community votes</span></div>
- <div class="grid" id="popularGrid"><div class="empty">Loading popular games...</div></div>
- <div class="section-head"><h2>⭐ All games</h2><span class="muted" id="gameCount"></span></div>
- <div class="toolbar"><label for="sortGames">Sort games</label><select id="sortGames" onchange="renderGames()" style="max-width:210px"><option value="featured">Featured first</option><option value="popular">Most popular</option><option value="likes">Most likes</option><option value="newest">Newest</option></select></div>
- <div class="grid" id="gamesGrid"><div class="empty">Loading games...</div></div>
-</section>
+  <main>
+    <section class="section">
+      <h2>Available Games</h2>
+      <div id="gamesGrid" class="games-grid"></div>
+      <div id="emptyGames" class="empty">No games have been uploaded yet.</div>
+    </section>
 
-<section id="publishPage" class="hidden">
- <div class="section-head"><h2 id="publishHeading">🚀 Publish a game</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
- <div class="notice">Sign in to submit a game. Playing games does not require an account. Games are reviewed before being published.</div>
- <div class="panel">
-  <form id="publishForm">
-   <div class="form-grid">
-    <div><label>Game title</label><input id="gameTitle" maxlength="45" required placeholder="My awesome game"></div>
-    <div><label>Category</label><select id="gameCategory"><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option></select></div>
-    <div class="wide"><label>Description</label><textarea id="gameDescription" maxlength="500" required placeholder="What is your game about?"></textarea></div>
-    <div class="wide"><label>Game website URL (optional if uploading HTML)</label><input id="gameUrl" type="url" placeholder="https://example.com/game"></div>
-    <div class="wide"><label>Or upload your HTML game</label><input id="gameFile" type="file" accept=".html,.htm,text/html"><small class="muted">HTML files up to 50 MB.</small></div>
-    <div><label>Cover image (optional)</label><input id="coverFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><small class="muted">Images up to 5 MB.</small></div>
-    <div><label>Fallback emoji</label><input id="gameEmoji" maxlength="4" value="🎮"></div>
-   </div>
-   <p class="muted">Only submit games you have permission to share.</p>
-   <button id="submitButton" type="submit">Send for review</button>
-   <p id="publishMessage" role="status"></p>
-  </form>
- </div>
-</section>
+    <section class="section">
+      <h2>Upload a Game</h2>
 
-<section id="minePage" class="hidden">
- <div class="section-head"><h2>🧰 My games</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
- <div class="panel" id="myGamesList">Loading...</div>
-</section>
+      <form id="gameForm">
+        <label for="title">Game title</label>
+        <input
+          id="title"
+          type="text"
+          placeholder="My awesome game"
+          required
+        />
 
-<section id="profilePage" class="hidden">
- <div class="section-head"><h2>👤 Your profile</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
- <div class="panel">
-  <h3>Change your username</h3>
-  <p class="muted">Your username is shown beside games you publish. Use 3–20 letters, numbers or underscores.</p>
-  <label for="newUsername">Username</label>
-  <input id="newUsername" maxlength="20" minlength="3" autocomplete="username" placeholder="Your new username">
-  <div class="actions" style="margin-top:12px"><button onclick="saveUsername()">💾 Save username</button></div>
-  <p id="profileMessage" role="status" class="muted"></p>
- </div>
- <div class="panel">
-  <h3>Account details</h3>
-  <p id="profileEmail" class="muted"></p>
-  <p id="profileRole" class="muted"></p>
- </div>
-</section>
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          placeholder="Tell players what your game is about"
+          required
+        ></textarea>
 
-<section id="adminPage" class="hidden">
- <div class="section-head"><h2>👑 Creator control centre</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
- <div class="notice">Only the account you have given admin access can use these controls.</div>
- <div class="panel"><h3>⚡ Quick commands</h3>
-  <p class="muted">Fast tools for managing the platform.</p>
-  <div class="admin-tools">
-   <button onclick="loadAdmin()">🔄 Refresh dashboard</button>
-   <button class="good" onclick="approveAllPending()">✅ Approve all pending</button>
-   <button class="secondary" onclick="unfeatureAll()">⭐ Remove all featured</button>
-   <button class="secondary" onclick="exportGamesCSV()">📥 Export games CSV</button>
-   <button class="secondary" onclick="blockAllPending()">🚫 Block all pending</button>
-   <button class="secondary" onclick="deleteBlockedGames()">🗑 Delete all blocked</button>
-   <button class="secondary" onclick="featureMostLiked()">🏆 Feature most liked</button>
-   <button class="secondary" onclick="showPage('home')">🏠 View public site</button>
-  </div>
- </div>
- <div class="panel"><h3>📣 Announcements</h3>
-  <p class="muted">Post a message that appears at the top of the Explore page.</p>
-  <label>Announcement title</label><input id="announcementTitle" maxlength="70" placeholder="Example: New games are here!">
-  <label>Message</label><textarea id="announcementBody" maxlength="500" placeholder="Write an update for everyone..."></textarea>
-  <div class="actions"><button class="good" onclick="publishAnnouncement()">📢 Publish announcement</button><button class="secondary" onclick="clearAnnouncementForm()">Clear</button></div>
-  <div id="announcementAdminList" style="margin-top:15px">Loading announcements...</div>
- </div>
- <div class="panel"><h3>📊 Platform statistics</h3><div class="grid" id="adminStats"><div class="notice">Loading statistics...</div></div></div>
- <div class="panel"><h3>Review queue</h3><div id="reviewQueue">Loading...</div></div>
- <div class="panel">
-  <h3>All games</h3>
-  <div class="toolbar">
-   <input id="adminSearch" placeholder="Search games..." oninput="renderAdmin()">
-   <select id="adminStatus" onchange="renderAdmin()" style="max-width:180px"><option>All</option><option>pending</option><option>approved</option><option>blocked</option></select>
-  </div>
-  <div id="adminGames"></div>
- </div>
-</section>
+        <label for="emoji">Game emoji</label>
+        <input
+          id="emoji"
+          type="text"
+          maxlength="4"
+          value="🎮"
+          placeholder="🎮"
+        />
 
-<section id="playPage" class="hidden">
- <div class="section-head"><h2 id="playerTitle">🎮 Now playing</h2><div class="actions"><button class="secondary" onclick="toggleFullscreen()">⛶ Fullscreen</button><button class="secondary" onclick="showPage('home')">✕ Close</button></div></div>
- <iframe id="player" title="Game player" sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads allow-presentation allow-same-origin" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
- <p class="muted" id="playerMessage"></p>
-</section>
+        <label for="bucketUrl">Game bucket URL</label>
+        <input
+          id="bucketUrl"
+          type="url"
+          placeholder="https://your-bucket.supabase.co/storage/v1/object/public/games/game.html"
+          required
+        />
 
-<div class="footer">© 2026 Thomas Games · Play freely. Create responsibly.</div>
-</main>
+        <label for="category">Category</label>
+        <select id="category">
+          <option value="action">Action</option>
+          <option value="adventure">Adventure</option>
+          <option value="puzzle">Puzzle</option>
+          <option value="racing">Racing</option>
+          <option value="strategy">Strategy</option>
+          <option value="other">Other</option>
+        </select>
 
-<div class="modal-back hidden" id="authModal">
- <div class="modal">
-  <div class="section-head"><h2 id="authTitle">Welcome to Thomas Games</h2><button class="secondary" onclick="closeAuth()">✕</button></div>
-  <div class="tabs">
-   <button id="loginTab" onclick="setAuthMode('login')">Sign in</button>
-   <button id="signupTab" class="secondary" onclick="setAuthMode('signup')">Create account</button>
-  </div>
-  <form id="authForm">
-   <label>Email address</label><input id="authEmail" type="email" required autocomplete="email" placeholder="you@example.com">
-   <label>Password</label><input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="At least 6 characters">
-   <p id="authMessage" class="muted" role="status"></p>
-   <button id="authSubmit" type="submit">Sign in</button>
-  </form>
- </div>
-</div>
+        <button id="reviewButton" type="submit">Review</button>
+      </form>
 
-<script>
-/* THOMAS GAMES CONFIGURATION */
-const SUPABASE_URL = "https://wtlxgzyzhpufkkqevxsp.supabase.co";
-const SUPABASE_KEY = "sb_publishable_HbyxJOh72u7q1vin37fDLA_-N39sU2f";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      <div id="status" class="status"></div>
 
-let currentUser = null;
-let currentProfile = null;
-let authMode = "login";
-let games = [];
-let gameVotes = [];
-let myGameVotes = {};
-let editingGameId = null;
+      <div id="reviewBox" class="review-box">
+        <div id="reviewEmoji" class="review-emoji">🎮</div>
+        <h3 id="reviewTitle"></h3>
+        <p id="reviewDescription"></p>
+        <div id="reviewCategory"></div>
+        <div id="reviewUrl" class="review-url"></div>
+      </div>
+    </section>
+  </main>
 
-const $ = id => document.getElementById(id);
-const escapeHTML = (value) => {
-  const s = String(value ?? "");
-  return s.replace(/[&<>"']/g, function(c) {
-    if (c === "&") return "&" + "amp;";
-    if (c === "<") return "&" + "lt;";
-    if (c === ">") return "&" + "gt;";
-    if (c === '"') return "&" + "quot;";
-    if (c === "'") return "&" + "#39;";
-    return c;
-  });
-};
+  <script>
+    // ============================================
+    // REPLACE ONLY THESE TWO LINES
+    // ============================================
+    const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    // ============================================
 
-function showPage(page) {
- ["home","publish","mine","profile","admin","play"].forEach(p => $(p+"Page").classList.toggle("hidden",p!==page));
- if(page==="home") renderGames();
- if(page==="mine") loadMyGames();
- if(page==="profile") loadProfilePage();
- if(page==="admin") loadAdmin();
- if(page==="publish" && !currentUser) openAuth();
- window.scrollTo(0,0);
-}
+    const supabase = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
 
-function openAuth() {
- $("authModal").classList.remove("hidden");
- setAuthMode("login");
-}
-function closeAuth() {$("authModal").classList.add("hidden");}
-function setAuthMode(mode) {
- authMode=mode;
- $("authTitle").textContent=mode==="login"?"Welcome back!":"Create your account";
- $("authSubmit").textContent=mode==="login"?"Sign in":"Create account";
- $("loginTab").className=mode==="login"?"":"secondary";
- $("signupTab").className=mode==="signup"?"":"secondary";
- $("authMessage").textContent="";
- $("authPassword").autocomplete=mode==="login"?"current-password":"new-password";
-}
+    const gamesGrid = document.getElementById("gamesGrid");
+    const emptyGames = document.getElementById("emptyGames");
+    const gameForm = document.getElementById("gameForm");
+    const reviewButton = document.getElementById("reviewButton");
+    const statusBox = document.getElementById("status");
+    const reviewBox = document.getElementById("reviewBox");
 
-async function loadProfile() {
- if(!currentUser) {currentProfile=null;return;}
- const {data,error}=await db.from("profiles").select("id,username,role").eq("id",currentUser.id).maybeSingle();
- if(error) console.error("Profile:",error.message);
- currentProfile=data||{id:currentUser.id,username:currentUser.email.split("@")[0],role:"user"};
-}
+    async function loadGames() {
+      try {
+        const { data, error } = await supabase
+          .from("games")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-function updateHeader() {
- const admin=currentProfile?.role==="admin";
- $("userLabel").textContent=currentUser?"👤 "+(currentProfile?.username||currentUser.email):"";
- $("authButton").textContent=currentUser?"Sign out":"Sign in";
- $("authButton").onclick=currentUser?signOut:openAuth;
- $("myGamesButton").classList.toggle("hidden",!currentUser);
- $("profileButton").classList.toggle("hidden",!currentUser);
- $("adminButton").classList.toggle("hidden",!admin);
-}
+        if (error) {
+          throw error;
+        }
 
-$("authForm").addEventListener("submit",async e=>{
- e.preventDefault();
- const email=$("authEmail").value.trim();
- const password=$("authPassword").value;
- const button=$("authSubmit");
- button.disabled=true;
- $("authMessage").textContent="Please wait...";
- try {
-  if(authMode==="signup") {
-   const {data,error}=await db.auth.signUp({email,password});
-   if(error) throw error;
-   if(data.session) {
-    currentUser=data.user;
-    await loadProfile();
-    updateHeader();
-    closeAuth();
-    showPage("home");
-    alert("Your account has been created and you are signed in!");
-   } else {
-    $("authMessage").textContent="Account created. Check your email to confirm, then sign in. (Tip: turn off email confirmation in Supabase for instant access.)";
-   }
-  } else {
-   const {data,error}=await db.auth.signInWithPassword({email,password});
-   if(error) throw error;
-   currentUser=data.user;
-   await loadProfile();
-   updateHeader();
-   closeAuth();
-   showPage("home");
-  }
- } catch(err) {
-  let msg = err.message || "Something went wrong.";
-  if(/rate limit|too many|email rate/i.test(msg)) {
-   msg = "Email rate limit exceeded. This usually happens when email confirmation is turned on. Turn it off in Supabase Authentication → Providers → Email, then try again.";
-  }
-  $("authMessage").textContent=msg;
- } finally {button.disabled=false;}
-});
+        gamesGrid.innerHTML = "";
 
-async function signOut() {
- await db.auth.signOut();
- currentUser=null;currentProfile=null;
- updateHeader();showPage("home");
-}
+        if (!data || data.length === 0) {
+          emptyGames.style.display = "block";
+          emptyGames.textContent = "No games have been uploaded yet.";
+          return;
+        }
 
-async function restoreSession() {
- const {data}=await db.auth.getSession();
- currentUser=data.session?.user||null;
- if(currentUser) await loadProfile();
- updateHeader();
- await loadGames();
-}
-db.auth.onAuthStateChange(async(_event,session)=>{
- currentUser=session?.user||null;
- if(currentUser) await loadProfile(); else currentProfile=null;
- updateHeader();
-});
+        emptyGames.style.display = "none";
 
-async function loadGames() {
- const {data,error}=await db.from("games")
-  .select("id,owner_id,title,description,category,game_url,game_file_path,cover_path,status,featured,version,created_at")
-  .eq("status","approved")
-  .order("created_at",{ascending:false});
- if(error) {
-  console.error(error);
-  $("gamesGrid").innerHTML='<div class="empty">Could not load games. Check your Supabase settings.</div>';
-  return;
- }
- games=data||[];
- await addCreatorNames(games);
- await loadGameVotes();
- renderGames();
- await loadPublicAnnouncements();
-}
+        data.forEach(function (game) {
+          const card = document.createElement("div");
+          card.className = "game-card";
 
-async function addCreatorNames(list) {
- const ids=[...new Set(list.map(g=>g.owner_id).filter(Boolean))];
- if(!ids.length) return;
- const {data}=await db.from("profiles").select("id,username").in("id",ids);
- const names={};
- (data||[]).forEach(p=>names[p.id]=p.username);
- list.forEach(g=>g.creatorName=names[g.owner_id]||"Player");
-}
+          const emoji = document.createElement("div");
+          emoji.className = "game-emoji";
+          emoji.textContent = game.emoji || "🎮";
 
-function cleanStoragePath(path) {
- let value=String(path || "").trim();
- if(!value) return "";
- if(/^https?:\/\//i.test(value)) {
-  try {
-   const url=new URL(value);
-   const match=url.pathname.match(/\/storage\/v1\/object\/(?:sign|public|authenticated)\/game-files\/(.+)$/i);
-   if(match) return decodeURIComponent(match[1]).replace(/^\/+/, "");
-  } catch(error) {
-   console.warn("Could not parse Supabase Storage URL:", error);
-  }
-  return value;
- }
- value=value.replace(/^\/+/, "");
- value=value.replace(/^game-files\//i, "");
- return value;
-}
-function storagePublicUrl(path) {
- const clean=cleanStoragePath(path);
- if(!clean) return "";
- return db.storage.from("game-files").getPublicUrl(clean).data?.publicUrl || "";
-}
-function usableGameUrl(game) {
- const fromPath=storagePublicUrl(game.game_file_path);
- return fromPath || String(game.game_url||"").trim();
-}
-function coverHTML(game) {
- const url=storagePublicUrl(game.cover_path);
- if(url) return `<div class="cover"><img src="${escapeHTML(url)}" alt="Game cover" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML='🎮'"></div>`;
- return `<div class="cover">${escapeHTML(game.emoji||"🎮")}</div>`;
-}
+          const title = document.createElement("h3");
+          title.className = "game-title";
+          title.textContent = game.title || "Untitled game";
 
-function voteTotals(gameId) {
- const rows=gameVotes.filter(v=>v.game_id===gameId);
- return {likes:rows.filter(v=>v.vote===1).length,dislikes:rows.filter(v=>v.vote===-1).length};
-}
-function gamePopularity(game) {
- const t=voteTotals(game.id);
- return t.likes-t.dislikes;
-}
-function gameCard(g) {
- const totals=voteTotals(g.id), mine=myGameVotes[g.id]||0;
- return `<article class="game">
-  ${coverHTML(g)}
-  <div class="game-body">
-   <div><span class="tag">${escapeHTML(g.category)}</span>${g.featured?'<span class="tag">⭐ Featured</span>':""}</div>
-   <h3>${escapeHTML(g.title)}</h3>
-   <p>${escapeHTML(g.description)}</p>
-   <p>👤 ${escapeHTML(g.creatorName||"Player")}</p>
-   <div class="game-actions">
-    <button onclick="playGame('${g.id}')">▶ Play</button>
-    <button class="secondary" onclick="showDetails('${g.id}')">Details</button>
-   </div>
-   <div class="game-actions vote-actions">
-    <button class="${mine===1?'good':'secondary'}" onclick="voteGame('${g.id}',1)">👍 ${totals.likes}</button>
-    <button class="${mine===-1?'danger':'secondary'}" onclick="voteGame('${g.id}',-1)">👎 ${totals.dislikes}</button>
-   </div>
-  </div>
- </article>`;
-}
-function renderGames() {
- const q=($("search").value||"").toLowerCase();
- const category=$("category").value;
- const filtered=games.filter(g=>
-  (category==="All"||g.category===category) &&
-  `${g.title} ${g.description} ${g.category} ${g.creatorName||""}`.toLowerCase().includes(q)
- );
- const sort=$("sortGames")?.value||"featured";
- filtered.sort((a,b)=>{
-  if(sort==="popular"||sort==="likes") {
-   const ta=voteTotals(a.id),tb=voteTotals(b.id);
-   const scoreA=sort==="likes"?ta.likes:ta.likes-ta.dislikes;
-   const scoreB=sort==="likes"?tb.likes:tb.likes-tb.dislikes;
-   return scoreB-scoreA || Number(b.featured)-Number(a.featured);
-  }
-  if(sort==="newest") return new Date(b.created_at)-new Date(a.created_at);
-  return Number(b.featured)-Number(a.featured);
- });
- $("gameCount").textContent=filtered.length+" games";
- $("gamesGrid").innerHTML=filtered.length?filtered.map(gameCard).join(""):'<div class="empty" style="grid-column:1/-1">No games found yet. Try another search!</div>';
- const popular=[...games].sort((a,b)=>gamePopularity(b)-gamePopularity(a)||voteTotals(b.id).likes-voteTotals(a.id).likes).slice(0,6);
- $("popularGrid").innerHTML=popular.length?popular.map(gameCard).join(""):'<div class="empty" style="grid-column:1/-1">No games yet.</div>';
-}
-async function loadGameVotes() {
- const {data,error}=await db.from("game_votes").select("game_id,user_id,vote");
- if(error) {console.warn("Game voting table is not set up yet:",error.message);gameVotes=[];myGameVotes={};return;}
- gameVotes=data||[];
- myGameVotes={};
- if(currentUser) gameVotes.forEach(v=>{if(v.user_id===currentUser.id)myGameVotes[v.game_id]=v.vote;});
-}
-async function voteGame(gameId,value) {
- if(!currentUser) {alert("Please sign in to like or dislike games.");openAuth();return;}
- const existing=myGameVotes[gameId]||0;
- const result=existing===value
-  ? await db.from("game_votes").delete().eq("game_id",gameId).eq("user_id",currentUser.id)
-  : await db.from("game_votes").upsert({game_id:gameId,user_id:currentUser.id,vote:value},{onConflict:"game_id,user_id"});
- if(result.error){alert("Could not save your vote: "+result.error.message);return;}
- await loadGameVotes();renderGames();
-}
+          const description = document.createElement("p");
+          description.className = "game-description";
+          description.textContent = game.description || "No description provided.";
 
-function showDetails(id) {
- const g=games.find(x=>x.id===id);
- if(!g)return;
- alert(g.title+"\n\n"+g.description+"\n\nCategory: "+g.category+"\nCreator: "+(g.creatorName||"Player"));
-}
+          const category = document.createElement("div");
+          category.className = "game-category";
+          category.textContent = game.category || "Other";
 
-async function playGame(id) {
-  const g = games.find(x => x.id === id);
-  if (!g) return;
+          const playButton = document.createElement("a");
+          playButton.className = "play-button";
+          playButton.href = game.bucket_url || "#";
+          playButton.target = "_blank";
+          playButton.rel = "noopener";
+          playButton.textContent = "Play game";
 
-  const url = usableGameUrl(g);
-  if (!url) {
-    alert("This game does not have a playable file or URL.");
-    return;
-  }
+          card.appendChild(emoji);
+          card.appendChild(title);
+          card.appendChild(description);
+          card.appendChild(category);
+          card.appendChild(playButton);
 
-  $("playerTitle").textContent = "🎮 " + g.title;
-  $("playerMessage").textContent = "Loading " + g.title + "...";
-  showPage("play");
-
-  try {
-    const response = await fetch(url, { cache: "no-store" });
-
-    if (!response.ok) {
-      throw new Error("Could not download game: HTTP " + response.status);
+          gamesGrid.appendChild(card);
+        });
+      } catch (error) {
+        console.error(error);
+        emptyGames.style.display = "block";
+        emptyGames.textContent =
+          "Could not load games: " + (error.message || "Unknown error");
+      }
     }
 
-    let html = await response.text();
-
-    const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
-    const baseTag = `<base href="${baseUrl}">`;
-
-    if (/<head[^>]*>/i.test(html)) {
-      html = html.replace(/<head[^>]*>/i, match => match + baseTag);
-    } else {
-      html = baseTag + html;
+    function showMessage(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = "status " + type;
     }
 
-    const blob = new Blob([html], { type: "text/html" });
-    const blobUrl = URL.createObjectURL(blob);
+    function showReview(game) {
+      document.getElementById("reviewEmoji").textContent = game.emoji || "🎮";
+      document.getElementById("reviewTitle").textContent = game.title;
+      document.getElementById("reviewDescription").textContent =
+        game.description;
+      document.getElementById("reviewCategory").textContent =
+        "Category: " + game.category;
+      document.getElementById("reviewUrl").textContent = game.bucket_url;
 
-    if (window.currentGameBlobUrl) {
-      URL.revokeObjectURL(window.currentGameBlobUrl);
+      reviewBox.style.display = "block";
     }
 
-    window.currentGameBlobUrl = blobUrl;
-    $("player").src = blobUrl;
-    $("playerMessage").textContent = "Playing " + g.title;
+    gameForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
 
-  } catch (error) {
-    console.error("Game loading error:", error);
-    $("playerMessage").textContent =
-      "Could not load this game: " + error.message;
-  }
-}
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const emoji = document.getElementById("emoji").value.trim() || "🎮";
+      const bucket_url = document.getElementById("bucketUrl").value.trim();
+      const category = document.getElementById("category").value;
 
-function toggleFullscreen() {
- const frame=$("player");
- if(document.fullscreenElement) document.exitFullscreen();
- else frame.requestFullscreen?.();
-}
+      if (!title || !description || !bucket_url) {
+        showMessage(
+          "Please fill in the title, description, and bucket URL.",
+          "error"
+        );
+        return;
+      }
 
-async function uploadFile(file, path, contentType) {
-  const uploadBody = contentType
-    ? new Blob([file], { type: contentType })
-    : file;
+      const game = {
+        title: title,
+        description: description,
+        emoji: emoji,
+        bucket_url: bucket_url,
+        category: category
+      };
 
-  const { error } = await db.storage
-    .from("game-files")
-    .upload(path, uploadBody, {
-      upsert: true,
-      contentType: contentType || file.type || "application/octet-stream",
-      cacheControl: "3600"
+      reviewButton.disabled = true;
+      reviewButton.textContent = "Reviewing...";
+      showMessage("", "");
+      reviewBox.style.display = "none";
+
+      try {
+        showReview(game);
+
+        const { data, error } = await supabase
+          .from("games")
+          .insert(game)
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        showMessage("Game reviewed and uploaded successfully!", "success");
+
+        gameForm.reset();
+        document.getElementById("emoji").value = "🎮";
+
+        loadGames();
+      } catch (error) {
+        console.error(error);
+        showMessage(
+          "Could not upload game: " + (error.message || "Unknown error"),
+          "error"
+        );
+      } finally {
+        reviewButton.disabled = false;
+        reviewButton.textContent = "Review";
+      }
     });
 
-  if (error) throw error;
-  return path;
-}
-
-function resetPublishForm() {
-  editingGameId = null;
-  $("publishHeading").textContent = "🚀 Publish a game";
-  $("submitButton").textContent = "Send for review";
-  $("publishForm").reset();
-  $("gameEmoji").value = "🎮";
-  $("publishMessage").textContent = "";
-}
-
-$("publishForm").addEventListener("submit",async e=>{
- e.preventDefault();
- if(!currentUser) {openAuth();return;}
- const title=$("gameTitle").value.trim();
- const description=$("gameDescription").value.trim();
- const category=$("gameCategory").value;
- const rawUrl=$("gameUrl").value.trim();
- const htmlFile=$("gameFile").files[0];
- const coverFile=$("coverFile").files[0];
- const emoji=$("gameEmoji").value.trim()||"🎮";
- const button=$("submitButton");
- $("publishMessage").textContent="";
- if(!title||!description) return;
- if(!editingGameId && !rawUrl && !htmlFile) {
-  $("publishMessage").textContent="Add a game URL or upload an HTML game.";
-  return;
- }
- if(rawUrl&&!/^https?:\/\//i.test(rawUrl)) {
-  $("publishMessage").textContent="Please use a valid HTTPS or HTTP game URL.";
-  return;
- }
- if(htmlFile&&htmlFile.size>50*1024*1024) {
-  $("publishMessage").textContent="Your HTML file must be 50 MB or smaller.";
-  return;
- }
- if(coverFile&&coverFile.size>5*1024*1024) {
-  $("publishMessage").textContent="Your cover image must be 5 MB or smaller.";
-  return;
- }
- button.disabled=true;
- button.textContent=editingGameId?"Updating...":"Uploading...";
- try {
-  const folder=currentUser.id+"/"+ (editingGameId || crypto.randomUUID());
-  let gamePath=null,coverPath=null;
-  if(htmlFile) gamePath=await uploadFile(htmlFile,folder+"/game.html","text/html");
-  if(coverFile) coverPath=await uploadFile(coverFile,folder+"/cover-"+coverFile.name.replace(/[^a-zA-Z0-9._-]/g,"_"),coverFile.type);
-  const gameUrl=gamePath?db.storage.from("game-files").getPublicUrl(gamePath).data.publicUrl:rawUrl;
-
-  const payload = {
-   title,
-   description,
-   category,
-   emoji,
-   game_url: gameUrl || null,
-   ...(gamePath ? {game_file_path: gamePath} : {}),
-   ...(coverPath ? {cover_path: coverPath} : {}),
-   status: editingGameId ? undefined : "pending",
-   featured: false,
-   version: "1.0"
-  };
-
-  let error;
-  if(editingGameId) {
-   const result = await db.from("games").update(payload).eq("id", editingGameId).eq("owner_id", currentUser.id);
-   error = result.error;
-  } else {
-   payload.owner_id = currentUser.id;
-   const result = await db.from("games").insert(payload);
-   error = result.error;
-  }
-  if(error) throw error;
-  resetPublishForm();
-  $("publishMessage").textContent=editingGameId?"✅ Game updated!":"✅ Submitted! Your game is waiting for admin approval.";
-  if(editingGameId) showPage("mine");
- } catch(err) {
-  console.error(err);
-  $("publishMessage").textContent="Upload failed: "+(err.message||"Please try again.");
- } finally {
-  button.disabled=false;
-  button.textContent=editingGameId?"Update game":"Send for review";
- }
-});
-
-async function loadMyGames() {
- if(!currentUser) {openAuth();return;}
- $("myGamesList").textContent="Loading your games...";
- const {data,error}=await db.from("games")
-  .select("*").eq("owner_id",currentUser.id).order("created_at",{ascending:false});
- if(error) {
-  $("myGamesList").textContent="Could not load your games: "+error.message;
-  return;
- }
- $("myGamesList").innerHTML=data.length?data.map(g=>`
-  <div class="row">
-   <div><strong>${escapeHTML(g.title)}</strong>
-    <div class="muted">${escapeHTML(g.category)} · <span class="status ${escapeHTML(g.status)}">${escapeHTML(g.status.toUpperCase())}</span></div>
-   </div>
-   <div class="row-actions">
-    <button class="secondary" onclick="editOwnGame('${g.id}')">Edit</button>
-    <button class="danger" onclick="deleteOwnGame('${g.id}')">Delete</button>
-   </div>
-  </div>`).join(""):'<div class="empty">You have not submitted any games yet.</div>';
-}
-
-async function editOwnGame(id) {
- const {data,error}=await db.from("games").select("*").eq("id",id).eq("owner_id",currentUser.id).single();
- if(error||!data){alert("Could not load game for editing.");return;}
- editingGameId=id;
- $("publishHeading").textContent="✏️ Edit your game";
- $("submitButton").textContent="Update game";
- $("gameTitle").value=data.title||"";
- $("gameDescription").value=data.description||"";
- $("gameCategory").value=data.category||"Arcade";
- $("gameUrl").value=data.game_url&&!data.game_file_path?data.game_url:"";
- $("gameEmoji").value=data.emoji||"🎮";
- $("publishMessage").textContent="Leave file fields empty to keep the current files.";
- showPage("publish");
-}
-
-async function deleteOwnGame(id) {
- if(!confirm("Delete this game?"))return;
- const {error}=await db.from("games").delete().eq("id",id).eq("owner_id",currentUser.id);
- if(error) {alert(error.message);return;}
- loadMyGames();loadGames();
-}
-
-async function loadProfilePage() {
- if(!currentUser){showPage("home");openAuth();return;}
- await loadProfile();
- $("newUsername").value=currentProfile?.username||"";
- $("profileEmail").textContent="Email: "+currentUser.email;
- $("profileRole").textContent="Account type: "+(isAdmin()?"Administrator":"Player");
- $("profileMessage").textContent="";
-}
-async function saveUsername() {
- if(!currentUser){openAuth();return;}
- const username=$("newUsername").value.trim();
- if(!/^[A-Za-z0-9_]{3,20}$/.test(username)){
-  $("profileMessage").textContent="Use 3–20 letters, numbers or underscores.";
-  return;
- }
- const {error}=await db.rpc("update_my_username",{new_username:username});
- if(error){$("profileMessage").textContent="Couldn't save: "+error.message+" (The username SQL setup may still be needed.)";return;}
- await loadProfile();updateHeader();
- $("profileMessage").textContent="✅ Username updated!";
-}
-
-function isAdmin() {return currentProfile?.role==="admin";}
-
-async function loadAdmin() {
- if(!isAdmin()) {alert("Admin access only.");showPage("home");return;}
- const {data,error}=await db.from("games").select("*").order("created_at",{ascending:false});
- if(error) {
-  $("reviewQueue").textContent=error.message;
-  $("adminGames").textContent=error.message;
-  return;
- }
- const all=data||[];
- await addCreatorNames(all);
- await loadAdminAnnouncements();
- const pending=all.filter(g=>g.status==="pending");
- const approved=all.filter(g=>g.status==="approved");
- const blocked=all.filter(g=>g.status==="blocked");
- const featured=all.filter(g=>g.featured);
- $("adminStats").innerHTML=[
-  ["🎮 Total games",all.length],["⏳ Pending",pending.length],
-  ["✅ Approved",approved.length],["🚫 Blocked",blocked.length],
-  ["⭐ Featured",featured.length]
- ].map(([label,value])=>`<div class="panel"><strong>${label}</strong><div style="font-size:30px;font-weight:900;margin-top:8px">${value}</div></div>`).join("");
- $("reviewQueue").innerHTML=pending.length?pending.map(g=>adminRow(g,true)).join(""):'<div class="empty">🎉 No games waiting for review.</div>';
- renderAdmin(all);
-}
-
-function adminRow(g,review=false) {
- return `<div class="row">
-  <div><strong>${escapeHTML(g.title)}</strong>
-   <div class="muted">${escapeHTML(g.category)} · by ${escapeHTML(g.creatorName||"Player")} · <span class="status ${escapeHTML(g.status)}">${escapeHTML(g.status.toUpperCase())}</span></div>
-   <div class="muted">${escapeHTML(g.description)}</div>
-  </div>
-  <div class="row-actions">
-   ${g.status!=="approved"?`<button class="good" onclick="moderateGame('${g.id}','approved')">Approve</button>`:""}
-   ${g.status!=="blocked"?`<button class="secondary" onclick="moderateGame('${g.id}','blocked')">Block</button>`:`<button class="good" onclick="moderateGame('${g.id}','approved')">Unblock</button>`}
-   <button class="secondary" onclick="toggleFeatured('${g.id}',${!g.featured})">${g.featured?"⭐ Unfeature":"☆ Feature"}</button>
-   <button class="danger" onclick="moderateGame('${g.id}','delete')">Delete</button>
-  </div>
- </div>`;
-}
-
-async function renderAdmin(existing) {
- if(!isAdmin())return;
- let all=existing;
- if(!all) {
-  const {data,error}=await db.from("games").select("*").order("created_at",{ascending:false});
-  if(error) { $("adminGames").textContent=error.message;return; }
-  all=data||[];
-  await addCreatorNames(all);
- }
- const q=($("adminSearch").value||"").toLowerCase();
- const status=$("adminStatus").value;
- const filtered=all.filter(g=>
-  (status==="All"||g.status===status)&&
-  `${g.title} ${g.description} ${g.creatorName||""}`.toLowerCase().includes(q)
- );
- $("adminGames").innerHTML=filtered.length?filtered.map(g=>adminRow(g)).join(""):'<div class="empty">No matching games.</div>';
-}
-
-async function toggleFeatured(id,featured) {
- if(!isAdmin()) return;
- const {error}=await db.from("games").update({featured}).eq("id",id);
- if(error) {alert("Could not change featured status: "+error.message);return;}
- await loadAdmin();
- await loadGames();
-}
-
-async function moderateGame(id,action) {
- if(!isAdmin())return;
- if(action==="delete"&&!confirm("Permanently delete this game?"))return;
- const update=action==="delete"?null:{status:action};
- const result=action==="delete"
-  ?await db.from("games").delete().eq("id",id)
-  :await db.from("games").update(update).eq("id",id);
- if(result.error) {alert("Could not update game: "+result.error.message);return;}
- await loadAdmin();
- await loadGames();
-}
-
-async function loadPublicAnnouncements() {
- const box=$("announcementBanner");
- if(!box) return;
- const {data,error}=await db.from("announcements").select("id,title,message,created_at").eq("active",true).order("created_at",{ascending:false}).limit(1);
- if(error) {console.warn("Announcements are not set up yet:",error.message);box.innerHTML="";return;}
- const a=data?.[0];
- box.innerHTML=a?`<div class="announcement"><strong>📣 ${escapeHTML(a.title)}</strong><div>${escapeHTML(a.message)}</div></div>`:"";
-}
-async function loadAdminAnnouncements() {
- const box=$("announcementAdminList");
- if(!box) return;
- const {data,error}=await db.from("announcements").select("id,title,message,active,created_at").order("created_at",{ascending:false}).limit(20);
- if(error) {box.innerHTML='<div class="notice">Announcements need the one-time SQL setup in the setup file.</div>';return;}
- box.innerHTML=data?.length?data.map(a=>`<div class="row"><div><strong>${escapeHTML(a.title)}</strong><div class="muted">${escapeHTML(a.message)}</div><span class="tag">${a.active?"ACTIVE":"HIDDEN"}</span></div><div class="row-actions"><button class="secondary" onclick="toggleAnnouncement('${a.id}',${!a.active})">${a.active?"Hide":"Show"}</button><button class="danger" onclick="deleteAnnouncement('${a.id}')">Delete</button></div></div>`).join(""):'<div class="empty">No announcements yet.</div>';
-}
-async function publishAnnouncement() {
- if(!isAdmin()) return;
- const title=$("announcementTitle").value.trim(),message=$("announcementBody").value.trim();
- if(!title||!message){alert("Please enter both a title and a message.");return;}
- const {error}=await db.from("announcements").insert({title,message,active:true,created_by:currentUser.id});
- if(error){alert("Could not publish announcement: "+error.message+" Check the SQL setup file.");return;}
- clearAnnouncementForm();await loadAdminAnnouncements();await loadPublicAnnouncements();
-}
-function clearAnnouncementForm(){$("announcementTitle").value="";$("announcementBody").value="";}
-async function toggleAnnouncement(id,active){
- if(!isAdmin())return;
- const {error}=await db.from("announcements").update({active}).eq("id",id);
- if(error){alert(error.message);return;}
- await loadAdminAnnouncements();await loadPublicAnnouncements();
-}
-async function deleteAnnouncement(id){
- if(!isAdmin()||!confirm("Delete this announcement?"))return;
- const {error}=await db.from("announcements").delete().eq("id",id);
- if(error){alert(error.message);return;}
- await loadAdminAnnouncements();await loadPublicAnnouncements();
-}
-async function approveAllPending(){
- if(!isAdmin()||!confirm("Approve every game currently waiting for review?"))return;
- const {error}=await db.from("games").update({status:"approved"}).eq("status","pending");
- if(error){alert("Could not approve games: "+error.message);return;}
- await loadAdmin();await loadGames();
-}
-async function unfeatureAll(){
- if(!isAdmin()||!confirm("Remove featured status from every game?"))return;
- const {error}=await db.from("games").update({featured:false}).eq("featured",true);
- if(error){alert("Could not update games: "+error.message);return;}
- await loadAdmin();await loadGames();
-}
-async function exportGamesCSV(){
- if(!isAdmin())return;
- const {data,error}=await db.from("games").select("id,title,description,category,status,featured,owner_id,game_url,game_file_path,cover_path,created_at").order("created_at",{ascending:false});
- if(error){alert("Export failed: "+error.message);return;}
- const cols=["id","title","description","category","status","featured","owner_id","game_url","game_file_path","cover_path","created_at"];
- const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
- const csv=[cols.join(","),...(data||[]).map(row=>cols.map(c=>quote(row[c])).join(","))].join("\r\n");
- const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download="thomas-games-export.csv";a.click();URL.revokeObjectURL(url);
-}
-
-async function blockAllPending(){
- if(!isAdmin()||!confirm("Block every pending game?"))return;
- const {error}=await db.from("games").update({status:"blocked"}).eq("status","pending");
- if(error){alert("Could not block pending games: "+error.message);return;}
- await loadAdmin();await loadGames();
-}
-async function deleteBlockedGames(){
- if(!isAdmin()||!confirm("Permanently delete ALL blocked games? This cannot be undone."))return;
- const {error}=await db.from("games").delete().eq("status","blocked");
- if(error){alert("Could not delete blocked games: "+error.message);return;}
- await loadAdmin();await loadGames();
-}
-async function featureMostLiked(){
- if(!isAdmin())return;
- const [{data:voteRows,error:voteError},{data:approvedRows,error:gamesError}]=await Promise.all([
-  db.from("game_votes").select("game_id,vote"),
-  db.from("games").select("id").eq("status","approved")
- ]);
- if(voteError){alert("Could not load votes: "+voteError.message);return;}
- if(gamesError){alert("Could not load approved games: "+gamesError.message);return;}
- const approvedIds=new Set((approvedRows||[]).map(g=>g.id));
- const totals={};
- (voteRows||[]).filter(v=>approvedIds.has(v.game_id)).forEach(v=>{totals[v.game_id]??={likes:0,score:0};if(v.vote===1)totals[v.game_id].likes++;totals[v.game_id].score+=v.vote;});
- const winner=Object.entries(totals).sort((a,b)=>b[1].likes-a[1].likes||b[1].score-a[1].score)[0];
- if(!winner){alert("There are no votes on approved games yet.");return;}
- const {error:featureError}=await db.from("games").update({featured:true}).eq("id",winner[0]).eq("status","approved");
- if(featureError){alert("Could not feature game: "+featureError.message);return;}
- await loadAdmin();await loadGames();
- alert("The most-liked game has been featured!");
-}
-
-async function start() {
- const {data}=await db.auth.getSession();
- currentUser=data.session?.user||null;
- if(currentUser) await loadProfile();
- updateHeader();
- await loadGames();
-}
-start();
-</script>
+    loadGames();
+  </script>
 </body>
 </html>
