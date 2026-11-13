@@ -210,7 +210,7 @@ let editingGameId = null;
 
 const $ = id => document.getElementById(id);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ "&":"&","<":"<",">":">",'"':""","'":"&#39;"
 })[c]);
 
 function showPage(page) {
