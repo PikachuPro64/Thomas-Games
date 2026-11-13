@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,7 +92,7 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
 </section>
 
 <section id="publishPage" class="hidden">
- <div class="section-head"><h2>🚀 Publish a game</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
+ <div class="section-head"><h2 id="publishHeading">🚀 Publish a game</h2><button class="secondary" onclick="showPage('home')">Back</button></div>
  <div class="notice">Sign in to submit a game. Playing games does not require an account. Games are reviewed before being published.</div>
  <div class="panel">
   <form id="publishForm">
@@ -102,7 +101,7 @@ label{display:block;font-size:13px;color:#c6d2eb;font-weight:700;margin:12px 0 6
     <div><label>Category</label><select id="gameCategory"><option>Arcade</option><option>Puzzle</option><option>Racing</option><option>Adventure</option><option>Action</option><option>Other</option></select></div>
     <div class="wide"><label>Description</label><textarea id="gameDescription" maxlength="500" required placeholder="What is your game about?"></textarea></div>
     <div class="wide"><label>Game website URL (optional if uploading HTML)</label><input id="gameUrl" type="url" placeholder="https://example.com/game"></div>
-    <div class="wide"><label>Or upload your HTML game</label><input id="gameFile" type="file" accept=".html,.htm,text/html"><small class="muted">HTML files up to 1 MB.</small></div>
+    <div class="wide"><label>Or upload your HTML game</label><input id="gameFile" type="file" accept=".html,.htm,text/html"><small class="muted">HTML files up to 50 MB.</small></div>
     <div><label>Cover image (optional)</label><input id="coverFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><small class="muted">Images up to 5 MB.</small></div>
     <div><label>Fallback emoji</label><input id="gameEmoji" maxlength="4" value="🎮"></div>
    </div>
@@ -207,6 +206,7 @@ let authMode = "login";
 let games = [];
 let gameVotes = [];
 let myGameVotes = {};
+let editingGameId = null;
 
 const $ = id => document.getElementById(id);
 const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
@@ -220,7 +220,6 @@ function showPage(page) {
  if(page==="profile") loadProfilePage();
  if(page==="admin") loadAdmin();
  if(page==="publish" && !currentUser) openAuth();
- if(page==="play") {}
  window.scrollTo(0,0);
 }
 
@@ -273,9 +272,9 @@ $("authForm").addEventListener("submit",async e=>{
     updateHeader();
     closeAuth();
     showPage("home");
-    alert("Your account has been created!");
+    alert("Your account has been created and you are signed in!");
    } else {
-    $("authMessage").textContent="Check your email to confirm your account, then sign in.";
+    $("authMessage").textContent="Account created. Check your email to confirm, then sign in. (Tip: turn off email confirmation in Supabase for instant access.)";
    }
   } else {
    const {data,error}=await db.auth.signInWithPassword({email,password});
@@ -287,7 +286,11 @@ $("authForm").addEventListener("submit",async e=>{
    showPage("home");
   }
  } catch(err) {
-  $("authMessage").textContent=err.message||"Something went wrong.";
+  let msg = err.message || "Something went wrong.";
+  if(/rate limit|too many|email rate/i.test(msg)) {
+   msg = "Email rate limit exceeded. This usually happens when email confirmation is turned on. Turn it off in Supabase Authentication → Providers → Email, then try again.";
+  }
+  $("authMessage").textContent=msg;
  } finally {button.disabled=false;}
 });
 
@@ -339,8 +342,6 @@ async function addCreatorNames(list) {
 function cleanStoragePath(path) {
  let value=String(path || "").trim();
  if(!value) return "";
- // Accept signed, public, and authenticated Supabase Storage URLs.
- // Ignore query strings such as the signed-URL token when extracting the object path.
  if(/^https?:\/\//i.test(value)) {
   try {
    const url=new URL(value);
@@ -467,7 +468,6 @@ async function playGame(id) {
 
     let html = await response.text();
 
-    // Set a base URL so relative images and resources can resolve.
     const baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
     const baseTag = `<base href="${baseUrl}">`;
 
@@ -495,18 +495,6 @@ async function playGame(id) {
   }
 }
 
-function playGameold(id) {
- const g=games.find(x=>x.id===id);
- if(!g)return;
- // Prefer the uploaded HTML file, then fall back to the saved URL.
- let url=usableGameUrl(g);
- if(!url) {alert("This game does not have a playable file or URL.");return;}
- $("playerTitle").textContent="🎮 "+g.title;
- $("playerMessage").textContent="Playing "+g.title;
- $("player").src="about:blank";
- $("player").src=url;
- showPage("play");
-}
 function toggleFullscreen() {
  const frame=$("player");
  if(document.fullscreenElement) document.exitFullscreen();
@@ -514,7 +502,6 @@ function toggleFullscreen() {
 }
 
 async function uploadFile(file, path, contentType) {
-  // Explicitly set the file's MIME type before uploading.
   const uploadBody = contentType
     ? new Blob([file], { type: contentType })
     : file;
@@ -522,7 +509,7 @@ async function uploadFile(file, path, contentType) {
   const { error } = await db.storage
     .from("game-files")
     .upload(path, uploadBody, {
-      upsert: false,
+      upsert: true,
       contentType: contentType || file.type || "application/octet-stream",
       cacheControl: "3600"
     });
@@ -531,11 +518,13 @@ async function uploadFile(file, path, contentType) {
   return path;
 }
 
-
-async function uploadFileOLD(file,path,contentType) {
- const {error}=await db.storage.from("game-files").upload(path,file,{upsert:false,contentType});
- if(error) throw error;
- return path;
+function resetPublishForm() {
+  editingGameId = null;
+  $("publishHeading").textContent = "🚀 Publish a game";
+  $("submitButton").textContent = "Send for review";
+  $("publishForm").reset();
+  $("gameEmoji").value = "🎮";
+  $("publishMessage").textContent = "";
 }
 
 $("publishForm").addEventListener("submit",async e=>{
@@ -547,10 +536,11 @@ $("publishForm").addEventListener("submit",async e=>{
  const rawUrl=$("gameUrl").value.trim();
  const htmlFile=$("gameFile").files[0];
  const coverFile=$("coverFile").files[0];
+ const emoji=$("gameEmoji").value.trim()||"🎮";
  const button=$("submitButton");
  $("publishMessage").textContent="";
  if(!title||!description) return;
- if(!rawUrl&&!htmlFile) {
+ if(!editingGameId && !rawUrl && !htmlFile) {
   $("publishMessage").textContent="Add a game URL or upload an HTML game.";
   return;
  }
@@ -558,8 +548,8 @@ $("publishForm").addEventListener("submit",async e=>{
   $("publishMessage").textContent="Please use a valid HTTPS or HTTP game URL.";
   return;
  }
- if(htmlFile&&htmlFile.size>1024*1024) {
-  $("publishMessage").textContent="Your HTML file must be 1 MB or smaller.";
+ if(htmlFile&&htmlFile.size>50*1024*1024) {
+  $("publishMessage").textContent="Your HTML file must be 50 MB or smaller.";
   return;
  }
  if(coverFile&&coverFile.size>5*1024*1024) {
@@ -567,35 +557,46 @@ $("publishForm").addEventListener("submit",async e=>{
   return;
  }
  button.disabled=true;
- button.textContent="Uploading...";
+ button.textContent=editingGameId?"Updating...":"Uploading...";
  try {
-  const folder=currentUser.id+"/"+crypto.randomUUID();
+  const folder=currentUser.id+"/"+ (editingGameId || crypto.randomUUID());
   let gamePath=null,coverPath=null;
   if(htmlFile) gamePath=await uploadFile(htmlFile,folder+"/game.html","text/html");
   if(coverFile) coverPath=await uploadFile(coverFile,folder+"/cover-"+coverFile.name.replace(/[^a-zA-Z0-9._-]/g,"_"),coverFile.type);
   const gameUrl=gamePath?db.storage.from("game-files").getPublicUrl(gamePath).data.publicUrl:rawUrl;
-  const {error}=await db.from("games").insert({
-   owner_id:currentUser.id,
+
+  const payload = {
    title,
    description,
    category,
-   game_url:gameUrl||null,
-   game_file_path:gamePath,
-   cover_path:coverPath,
-   status:"pending",
-   featured:false,
-   version:"1.0"
-  });
+   emoji,
+   game_url: gameUrl || null,
+   ...(gamePath ? {game_file_path: gamePath} : {}),
+   ...(coverPath ? {cover_path: coverPath} : {}),
+   status: editingGameId ? undefined : "pending",
+   featured: false,
+   version: "1.0"
+  };
+
+  let error;
+  if(editingGameId) {
+   const result = await db.from("games").update(payload).eq("id", editingGameId).eq("owner_id", currentUser.id);
+   error = result.error;
+  } else {
+   payload.owner_id = currentUser.id;
+   const result = await db.from("games").insert(payload);
+   error = result.error;
+  }
   if(error) throw error;
-  $("publishForm").reset();
-  $("gameEmoji").value="🎮";
-  $("publishMessage").textContent="✅ Submitted! Your game is waiting for admin approval.";
+  resetPublishForm();
+  $("publishMessage").textContent=editingGameId?"✅ Game updated!":"✅ Submitted! Your game is waiting for admin approval.";
+  if(editingGameId) showPage("mine");
  } catch(err) {
   console.error(err);
   $("publishMessage").textContent="Upload failed: "+(err.message||"Please try again.");
  } finally {
   button.disabled=false;
-  button.textContent="Send for review";
+  button.textContent=editingGameId?"Update game":"Send for review";
  }
 });
 
@@ -613,8 +614,26 @@ async function loadMyGames() {
    <div><strong>${escapeHTML(g.title)}</strong>
     <div class="muted">${escapeHTML(g.category)} · <span class="status ${escapeHTML(g.status)}">${escapeHTML(g.status.toUpperCase())}</span></div>
    </div>
-   <div class="row-actions"><button class="danger" onclick="deleteOwnGame('${g.id}')">Delete</button></div>
+   <div class="row-actions">
+    <button class="secondary" onclick="editOwnGame('${g.id}')">Edit</button>
+    <button class="danger" onclick="deleteOwnGame('${g.id}')">Delete</button>
+   </div>
   </div>`).join(""):'<div class="empty">You have not submitted any games yet.</div>';
+}
+
+async function editOwnGame(id) {
+ const {data,error}=await db.from("games").select("*").eq("id",id).eq("owner_id",currentUser.id).single();
+ if(error||!data){alert("Could not load game for editing.");return;}
+ editingGameId=id;
+ $("publishHeading").textContent="✏️ Edit your game";
+ $("submitButton").textContent="Update game";
+ $("gameTitle").value=data.title||"";
+ $("gameDescription").value=data.description||"";
+ $("gameCategory").value=data.category||"Arcade";
+ $("gameUrl").value=data.game_url&&!data.game_file_path?data.game_url:"";
+ $("gameEmoji").value=data.emoji||"🎮";
+ $("publishMessage").textContent="Leave file fields empty to keep the current files.";
+ showPage("publish");
 }
 
 async function deleteOwnGame(id) {
@@ -623,7 +642,6 @@ async function deleteOwnGame(id) {
  if(error) {alert(error.message);return;}
  loadMyGames();loadGames();
 }
-
 
 async function loadProfilePage() {
  if(!currentUser){showPage("home");openAuth();return;}
@@ -667,7 +685,7 @@ async function loadAdmin() {
   ["🎮 Total games",all.length],["⏳ Pending",pending.length],
   ["✅ Approved",approved.length],["🚫 Blocked",blocked.length],
   ["⭐ Featured",featured.length]
- ].map(([label,value])=>`<div class="panel"><strong>${label}</strong><div style="font-size:30px;font-weight:900;margin-top:8px">${value}</div></div>`).join("");
+ ].map(([label,value])=`<div class="panel"><strong>${label}</strong><div style="font-size:30px;font-weight:900;margin-top:8px">${value}</div></div>`).join("");
  $("reviewQueue").innerHTML=pending.length?pending.map(g=>adminRow(g,true)).join(""):'<div class="empty">🎉 No games waiting for review.</div>';
  renderAdmin(all);
 }
@@ -724,7 +742,6 @@ async function moderateGame(id,action) {
  await loadAdmin();
  await loadGames();
 }
-
 
 async function loadPublicAnnouncements() {
  const box=$("announcementBanner");
@@ -784,7 +801,6 @@ async function exportGamesCSV(){
  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
  a.href=url;a.download="thomas-games-export.csv";a.click();URL.revokeObjectURL(url);
 }
-
 
 async function blockAllPending(){
  if(!isAdmin()||!confirm("Block every pending game?"))return;
