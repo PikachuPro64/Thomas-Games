@@ -209,9 +209,17 @@ let myGameVotes = {};
 let editingGameId = null;
 
 const $ = id => document.getElementById(id);
-const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
- "&":"&","<":"<",">":">",'"':""","'":"&#39;"
-})[c]);
+const escapeHTML = (value) => {
+  const s = String(value ?? "");
+  return s.replace(/[&<>"']/g, function(c) {
+    if (c === "&") return "&" + "amp;";
+    if (c === "<") return "&" + "lt;";
+    if (c === ">") return "&" + "gt;";
+    if (c === '"') return "&" + "quot;";
+    if (c === "'") return "&" + "#39;";
+    return c;
+  });
+};
 
 function showPage(page) {
  ["home","publish","mine","profile","admin","play"].forEach(p => $(p+"Page").classList.toggle("hidden",p!==page));
@@ -685,7 +693,7 @@ async function loadAdmin() {
   ["🎮 Total games",all.length],["⏳ Pending",pending.length],
   ["✅ Approved",approved.length],["🚫 Blocked",blocked.length],
   ["⭐ Featured",featured.length]
- ].map(([label,value])=`<div class="panel"><strong>${label}</strong><div style="font-size:30px;font-weight:900;margin-top:8px">${value}</div></div>`).join("");
+ ].map(([label,value])=>`<div class="panel"><strong>${label}</strong><div style="font-size:30px;font-weight:900;margin-top:8px">${value}</div></div>`).join("");
  $("reviewQueue").innerHTML=pending.length?pending.map(g=>adminRow(g,true)).join(""):'<div class="empty">🎉 No games waiting for review.</div>';
  renderAdmin(all);
 }
